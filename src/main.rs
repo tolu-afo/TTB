@@ -6,6 +6,9 @@ use tokio::select;
 use tokio::signal::ctrl_c;
 use dotenv::dotenv;
 
+use twitch_api2::{helix::channels::GetChannelInformationRequest, TwitchClient};
+use twitch_api2::twitch_oauth2::{tokens::errors::AppAccessTokenError, AppAccessToken, Scope, TwitchToken};
+
 use chrono::{Local, DateTime};
 
 mod duel;
@@ -13,9 +16,27 @@ mod duel;
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
   dotenv().ok();
+  let broadcaster_id = "775160265";
+  let client_secret = std::env::var("CLIENT_SECRET").expect("CLIENT_SECRET must be set.").into();
+  let client_id = std::env::var("CLIENT_ID").expect("CLIENT_SECRET must be set.").into();
+
   let token = std::env::var("BONGO_OAUTH_TOKEN").expect("BONGO_OAUTH_TOKEN must be set.");
   let oauth = std::fmt::format(format_args!("oauth:{}", token));
   let user: String = std::env::var("BONGO_USER").expect("BONGO_USER must be set.");
+
+
+  let twitch_client : TwitchClient<reqwest::Client> = TwitchClient::default();
+  let twitch_token = AppAccessToken::get_app_access_token(&twitch_client, client_id, client_secret, Scope::all())
+        .await?;
+
+  let req = GetChannelInformationRequest::builder()
+    .broadcaster_id(broadcaster_id)
+    .build();
+  
+  println!(
+      "{:?}",
+      &twitch_client.helix.req_get(req, &twitch_token).await?.data.unwrap().title
+  );
 
   tracing_subscriber::fmt::init();
   
