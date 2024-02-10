@@ -1,7 +1,8 @@
 pub mod duel {
+    use std::num::NonZeroU32;
     use chrono::{Local, DateTime};
     use std::str::FromStr;
-    use anyhow::{anyhow, Context, Result};
+    use anyhow::{anyhow, Result};
     #[derive(Debug, Clone)]
     pub struct TwitchUserId(String);
 
@@ -23,7 +24,7 @@ pub mod duel {
         }
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Duel {
         challenge_datetime: DateTime<Local>,
         
@@ -31,7 +32,7 @@ pub mod duel {
         
         pub challenged: TwitchUserId,
         
-        points: u32,
+        points: NonZeroU32,
 
         pub winner: TwitchUserId, 
 
@@ -39,18 +40,23 @@ pub mod duel {
     }
 
     impl Duel {
-        pub fn new(challenger: &str, challenged: &str, points: u32) -> Duel {
+        pub fn new(challenger: &str, challenged: &str, points: NonZeroU32) -> Duel {
 
             let dt = Local::now();
 
             Duel {
                 challenge_datetime: dt,
                 challenger: TwitchUserId::from_str(challenger).unwrap(),
-                challenged: TwitchUserId::from_str(challenger).unwrap(),
+                challenged: TwitchUserId::from_str(challenged).unwrap(),
                 points: points,
                 winner: TwitchUserId::from_str("").unwrap(),
                 accepted: false
             }
+        }
+
+        pub fn accept_duel(&mut self) -> bool {
+            self.accepted = true;
+            self.accepted
         }
     }
 
