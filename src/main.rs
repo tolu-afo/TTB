@@ -1,52 +1,22 @@
-use std::hash::Hash;
-use std::string;
 use std::num::NonZeroU32;
-use std::collections::HashMap;
 
 use anyhow::Result;
-use clap::error;
+use state::State;
 // use crate::state;
 use tokio::select;
 use tokio::signal::ctrl_c;
 use dotenv::dotenv;
 
 // use tokio::task::futures;
-use twitch_api2::helix;
-use futures::TryStreamExt;
+// use twitch_api2::helix;
+// use futures::TryStreamExt;
 
 use twitch_api2::{helix::channels::GetChannelInformationRequest, TwitchClient};
-use twitch_api2::twitch_oauth2::{tokens::errors::AppAccessTokenError, AppAccessToken, Scope, TwitchToken};
-
-use chrono::{Local, DateTime};
+use twitch_api2::twitch_oauth2::{AppAccessToken, Scope};
 
 mod duel;
 mod state;
-
-// async fn get_chatter(client:&TwitchClient<'_, reqwest::Client>, token:&AppAccessToken){
-//   let chatters: Vec<helix::chat::Chatter> = client.get_chatters("1234", "4321", 1000, &token).try_collect().await;
-
-//   chatters
-// }
-
-#[derive(Debug)]
-pub struct State {
-    duel_cache: HashMap::<String, duel::duel::Duel> 
-}
-
-impl State {
-    pub fn new() -> State {
-        let cache:HashMap::<String, duel::duel::Duel> = HashMap::new();
-
-        return State {
-            duel_cache: cache,
-        }
-    }
-
-    pub fn save_duel(&mut self, duel: &duel::duel::Duel) -> () {
-        // saves duel to cache
-        self.duel_cache.insert(format!("{}{}", duel.challenger.to_string(), duel.challenged.to_string()), duel.clone());
-    }
-}
+mod chatter; 
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
@@ -184,8 +154,9 @@ async fn handle_accept_command(client: &mut tmi::Client, msg: tmi::Privmsg<'_>, 
   }; 
 
   // duel
-  send_msg(client, &msg, &format!("@{} @{} the duel has been accepted! Prepare to battle in 3 seconds", challenger, challenged)).await;
+  let _ = send_msg(client, &msg, &format!("@{} @{} the duel has been accepted! Prepare to battle in 3 seconds", challenger, challenged)).await;
 
+  // TODO: Run Duel, Get Winner, Give Points, remove duel from cache.
   return Ok(())
 }
 
@@ -206,13 +177,15 @@ async fn handle_duel_command(client: &mut tmi::Client, msg: tmi::Privmsg<'_>, bo
         return send_duel_err(&challenger, client, msg, "You need to provide a username in the format @<user> or <user>").await;
       }
     };
+
     let points = match cmd_iter.next() {
       Some(chal) => chal,
       None => {
         return send_duel_err(&challenger, client, msg, "You need to provide a point value.").await;
       }
     };
-    let points = match points.parse() {
+
+    let points: NonZeroU32 = match points.parse() {
       Ok(p) => p,
       Err(_) => {
         return send_duel_err(&challenger, client, msg, "Provide a valid point value.").await;
@@ -223,13 +196,15 @@ async fn handle_duel_command(client: &mut tmi::Client, msg: tmi::Privmsg<'_>, bo
       return send_duel_err(&challenger, client, msg, "Too many arguments!").await;
     }
 
-    let curr_duel = duel::duel::Duel::new(
-    &challenger, 
-    &challenged, 
-    points);
+    let curr_duel = duel::Duel::new(
+      &challenger, 
+      &challenged, 
+      points,
+      bot_state
+    );
 
     bot_state.save_duel(&curr_duel);
     dbg!(curr_duel);
 
-    reply_to(client, &msg, "its time to d-d-d-d-d-duel!!!").await
+    reply_to(client, &msg, &format!("@{} Challenge Announced", challenger)).await
 }
