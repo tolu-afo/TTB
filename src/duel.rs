@@ -71,6 +71,8 @@ impl Duel {
         let question = self.generate_question();
 
         send_msg(client, msg, question.q).await.unwrap();
+
+        //     TODO: Add Question to Duel object
     }
 
     fn generate_question(&mut self) -> Question {
@@ -78,9 +80,16 @@ impl Duel {
         //     unscramble a word
         //     quick maths
         //     riddle
+        // TODO: picking a random question
         QUESTIONS[1]
     }
-    fn award_winner(&mut self, username: TwitchUserId) -> () {}
+    fn award_winner(&mut self, username: TwitchUserId) -> () {
+        //     TODO: Update points, wins
+    }
+
+    fn punish_loser(&mut self, username: TwitchUserId) -> () {
+        //     TODO: Deduct Points, add loss
+    }
 }
 
 // duel flow

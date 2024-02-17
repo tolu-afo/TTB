@@ -17,7 +17,7 @@ mod state;
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     dotenv().ok();
-
+    // TODO: Add a database for chatters, duels, & bot state
     let broadcaster_id =
         std::env::var("TOLUAFO_BROADCASTER_ID").expect("TOLUAFO_BROADCASTER_ID must be set");
     let client_secret = std::env::var("CLIENT_SECRET")
