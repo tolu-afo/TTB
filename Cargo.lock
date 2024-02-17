@@ -311,6 +311,7 @@ dependencies = [
  "clap",
  "dotenv",
  "futures",
+ "rand",
  "reqwest",
  "tmi",
  "tokio",
