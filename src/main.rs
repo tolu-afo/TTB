@@ -10,6 +10,7 @@ use twitch_api2::{helix::channels::GetChannelInformationRequest, TwitchClient};
 
 mod chatter;
 mod commands;
+mod content;
 mod duel;
 mod messaging;
 mod state;

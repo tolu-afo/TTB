@@ -1,6 +1,5 @@
-use std::str::FromStr;
 use anyhow::{anyhow, Result};
-use crate::state::{self, State};
+use std::str::FromStr;
 // top 3 duelists
 
 #[derive(Debug, Clone)]
@@ -24,24 +23,24 @@ impl std::fmt::Display for TwitchUserId {
     }
 }
 
-pub fn add_points(username: TwitchUserId, points:u32) -> () {
+pub fn add_points(username: TwitchUserId, points: u32) -> () {
     // TODO: add points to specified user by updating record in database
 }
 
-pub fn subtract_points(username: TwitchUserId, points:u32) -> () {
+pub fn subtract_points(username: TwitchUserId, points: u32) -> () {
     // TODO: add points to specified user by updating record in database
 }
 
 pub fn get_points(username: TwitchUserId) -> u32 {
     // TODO: returns a users points to display as a u32
-    return 0
+    return 0;
 }
 
 pub fn add_win(username: TwitchUserId) -> () {
     // TODO: add points to specified user by updating record in database
 }
 
-pub fn subtract_win(username: TwitchUserId, points:u32) -> () {
+pub fn subtract_win(username: TwitchUserId, points: u32) -> () {
     // TODO: subtract a win to specified user by updating record in database
 }
 
@@ -49,7 +48,7 @@ pub fn add_loss(username: TwitchUserId) -> () {
     // TODO: add a loss to specified user by updating record in database
 }
 
-pub fn subtract_loss(username: TwitchUserId, points:u32) -> () {
+pub fn subtract_loss(username: TwitchUserId, points: u32) -> () {
     // TODO: subtract a loss to specified user by updating record in database
 }
 
@@ -68,5 +67,5 @@ pub fn subtract_loss(username: TwitchUserId, points:u32) -> () {
 //     let x = state.chatter_cache.get_mut(username);
 //     let Some(x) = {
 //         x
-//     }; 
+//     };
 // }
