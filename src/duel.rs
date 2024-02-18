@@ -30,7 +30,10 @@ impl Duel {
     pub async fn ask_question(&mut self, client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) -> () {
         let question = Question::randomized();
         send_msg(client, msg, question.q).await.unwrap();
+
+        //     TODO: Add Question to Duel object
     }
+
 
     fn award_winner(&mut self, username: TwitchUserId) -> () {}
 }
