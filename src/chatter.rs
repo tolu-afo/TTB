@@ -23,8 +23,19 @@ impl std::fmt::Display for TwitchUserId {
     }
 }
 
-pub fn add_points(username: TwitchUserId, points: u32) -> () {
+#[derive(Debug, Clone)]
+pub struct Chatter{
+    id: u32,
+    username: TwitchUserId,
+    points: u32,
+    wins: u32,
+    losses: u32
+}
+
+pub fn add_points(username: TwitchUserId, points:u32) -> () {
     // TODO: add points to specified user by updating record in database
+
+
 }
 
 pub fn subtract_points(username: TwitchUserId, points: u32) -> () {
@@ -51,21 +62,3 @@ pub fn add_loss(username: TwitchUserId) -> () {
 pub fn subtract_loss(username: TwitchUserId, points: u32) -> () {
     // TODO: subtract a loss to specified user by updating record in database
 }
-
-// pub fn get_chatter(username: &str, mut state: State) -> Option<&mut Chatter>{
-//     // let Some(x) = state.get_chatter(username.to_owned());
-//     // let y = match state.get_chatter(username.to_owned()) {
-//     //     Some(x) => x,
-//     //     None => None
-//     // };
-//     // y
-
-//     // match state.chatter_cache.get_mut(username) {
-//     //     Some(x) => x,
-//     //     None => None
-//     // }
-//     let x = state.chatter_cache.get_mut(username);
-//     let Some(x) = {
-//         x
-//     };
-// }
