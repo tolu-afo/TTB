@@ -4,8 +4,8 @@ diesel::table! {
     chatters (id) {
         id -> Int4,
         username -> Varchar,
-        points -> Nullable<Int4>,
-        wins -> Nullable<Int4>,
-        losses -> Nullable<Int4>,
+        points -> Int4,
+        wins -> Int4,
+        losses -> Int4,
     }
 }

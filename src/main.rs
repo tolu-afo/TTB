@@ -14,7 +14,6 @@ mod content;
 mod duel;
 mod messaging;
 mod state;
-mod db;
 mod models;
 mod schema;
 
