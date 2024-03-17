@@ -1,6 +1,7 @@
 -- Your SQL goes here
 CREATE TABLE chatters (
    id SERIAL PRIMARY KEY,
+   twitch_id VARCHAR NOT NULL UNIQUE,
    username VARCHAR NOT NULL,
    points INTEGER NOT NULL DEFAULT 0,
    wins INTEGER NOT NULL DEFAULT 0,

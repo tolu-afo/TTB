@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use duel_bot::*;
 use std::env::args;
 
+
 fn main() {
     use self::schema::chatters::dsl::chatters;
 

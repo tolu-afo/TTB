@@ -1,3 +1,4 @@
+use duel_bot::*;
 use crate::commands;
 use crate::state::State;
 
@@ -25,7 +26,11 @@ pub async fn on_msg(
     bot_state: &mut State,
 ) -> anyhow::Result<()> {
     println!("{}: {}", msg.sender().name(), msg.text());
+
+    record_user_presence(&msg.sender().id(), &msg.sender().name());
+
     // TODO: add answer command
+    // TODO: add !points command
     match msg.text().split_ascii_whitespace().next() {
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
