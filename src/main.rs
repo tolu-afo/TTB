@@ -14,6 +14,8 @@ mod content;
 mod duel;
 mod messaging;
 mod state;
+mod models;
+mod schema;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
