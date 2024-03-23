@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Result};
 use std::str::FromStr;
+use log::info;
+use duel_bot::{db_get_chatter, get_chatter, update_losses, update_points};
 // top 3 duelists
 
 #[derive(Debug, Clone)]
@@ -23,6 +25,8 @@ impl std::fmt::Display for TwitchUserId {
     }
 }
 
+// TODO: Add Points NewType Idiom https://doc.rust-lang.org/rust-by-example/generics/new_types.html
+
 #[derive(Debug, Clone)]
 pub struct Chatter{
     id: u32,
@@ -32,33 +36,69 @@ pub struct Chatter{
     losses: u32
 }
 
-pub fn add_points(username: TwitchUserId, points:u32) -> () {
-    // TODO: add points to specified user by updating record in database
-
-
+pub fn add_points(twitch_id: &str, points:i32) -> () {
+    match get_chatter(twitch_id){
+        Some(chatter) => {
+            let new_points = chatter.points + points;
+            update_points(twitch_id, new_points)
+        },
+        None => info!("No Chatter with id: {} to update!", twitch_id)
+    }
 }
 
-pub fn subtract_points(username: TwitchUserId, points: u32) -> () {
-    // TODO: add points to specified user by updating record in database
+pub fn subtract_points(twitch_id: &str, points: i32) -> () {
+    match get_chatter(twitch_id){
+        Some(chatter) => {
+            let new_points = chatter.points - points;
+            update_points(twitch_id, new_points)
+        },
+        None => info!("No Chatter with id: {} to update!", twitch_id)
+    }
 }
 
-pub fn get_points(username: TwitchUserId) -> u32 {
-    // TODO: returns a users points to display as a u32
-    return 0;
+pub fn get_points(twitch_id: &str) -> i32 {
+    match get_chatter(twitch_id){
+        Some(chatter) => chatter.points,
+        None => info!("No Chatter with id: {}", twitch_id)
+    }
 }
 
-pub fn add_win(username: TwitchUserId) -> () {
-    // TODO: add points to specified user by updating record in database
+pub fn add_win(twitch_id: &str) -> () {
+    match get_chatter(twitch_id){
+        Some(chatter) => {
+            let new_wins = chatter.wins + 1;
+            update_points(twitch_id, new_wins)
+        },
+        None => info!("No Chatter with id: {} to update!", twitch_id)
+    }
 }
 
-pub fn subtract_win(username: TwitchUserId, points: u32) -> () {
-    // TODO: subtract a win to specified user by updating record in database
+pub fn subtract_win(twitch_id: &str) -> () {
+    match get_chatter(twitch_id){
+        Some(chatter) => {
+            let new_wins = chatter.wins - 1;
+            update_points(twitch_id, new_wins)
+        },
+        None => info!("No Chatter with id: {} to update!", twitch_id)
+    }
 }
 
-pub fn add_loss(username: TwitchUserId) -> () {
-    // TODO: add a loss to specified user by updating record in database
+pub fn add_loss(twitch_id: &str) -> () {
+    match get_chatter(twitch_id){
+        Some(chatter) => {
+            let new_losses = chatter.losses + 1;
+            update_losses(twitch_id, new_losses)
+        },
+        None => info!("No Chatter with id: {} to update!", twitch_id)
+    }
 }
 
-pub fn subtract_loss(username: TwitchUserId, points: u32) -> () {
-    // TODO: subtract a loss to specified user by updating record in database
+pub fn subtract_loss(twitch_id: &str) -> () {
+    match get_chatter(twitch_id){
+        Some(chatter) => {
+            let new_losses = chatter.losses - 1;
+            update_losses(twitch_id, new_losses)
+        },
+        None => info!("No Chatter with id: {} to update!", twitch_id)
+    }
 }
