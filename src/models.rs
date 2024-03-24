@@ -1,5 +1,5 @@
-use diesel::prelude::*;
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = crate::schema::chatters)]
@@ -11,7 +11,7 @@ pub struct Chatter {
     pub points: i32,
     pub wins: i32,
     pub losses: i32,
-    pub last_seen: NaiveDateTime
+    pub last_seen: NaiveDateTime,
 }
 
 #[derive(Queryable, Selectable)]
@@ -20,10 +20,10 @@ pub struct Chatter {
 pub struct Duel {
     pub id: i32,
     pub accepted: bool,
-    pub points:i32,
+    pub points: i32,
     pub challenger: String,
     pub challenged: String,
-    pub winner: Option<String>
+    pub winner: Option<String>,
 }
 
 use crate::schema::chatters;
@@ -34,7 +34,6 @@ pub struct NewChatter<'a> {
     pub twitch_id: &'a str,
     pub username: &'a str,
 }
-
 
 use crate::schema::duels;
 

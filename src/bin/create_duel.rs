@@ -1,7 +1,7 @@
 use duel_bot::*;
 use std::io::{stdin, Read};
 
-fn main(){
+fn main() {
     let connection = &mut establish_connection();
 
     let mut challenger = String::new();

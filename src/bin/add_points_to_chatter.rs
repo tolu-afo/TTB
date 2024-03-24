@@ -1,9 +1,9 @@
 use self::models::Chatter;
 use diesel::prelude::*;
+use duel_bot::schema::chatters::points;
 use duel_bot::*;
 use std::env::args;
 use std::ops::Add;
-use duel_bot::schema::chatters::points;
 
 fn main() {
     use self::schema::chatters::dsl::{chatters, points};
@@ -33,5 +33,8 @@ fn main() {
         .get_result(connection)
         .unwrap();
 
-    println!("Updated Chatter {}; points update to: {}", chatter.username, chatter.points);
+    println!(
+        "Updated Chatter {}; points update to: {}",
+        chatter.username, chatter.points
+    );
 }

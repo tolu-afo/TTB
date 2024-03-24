@@ -1,6 +1,6 @@
-use duel_bot::*;
 use crate::commands;
 use crate::state::State;
+use duel_bot::*;
 
 pub async fn send_duel_err(
     challenger: &str,
