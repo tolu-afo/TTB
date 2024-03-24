@@ -1,7 +1,7 @@
 use anyhow::Result;
 use dotenv::dotenv;
-use tmi::Client;
 use tmi::client::ConnectError;
+use tmi::Client;
 use tokio::select;
 use tokio::signal::ctrl_c;
 use twitch_api2::{helix::channels::GetChannelInformationRequest, TwitchClient};

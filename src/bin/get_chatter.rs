@@ -1,7 +1,10 @@
-use self::models::Chatter;
-use diesel::prelude::*;
-use duel_bot::*;
 use std::env::args;
+
+use diesel::prelude::*;
+
+use duel_bot::db::establish_connection;
+
+use self::models::Chatter;
 
 fn main() {
     use self::schema::chatters::dsl::chatters;

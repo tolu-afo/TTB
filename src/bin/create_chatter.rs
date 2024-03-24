@@ -1,5 +1,6 @@
-use duel_bot::*;
-use std::io::{stdin, Read};
+use std::io::stdin;
+
+use duel_bot::db::{create_chatter, establish_connection};
 
 fn main() {
     let connection = &mut establish_connection();

@@ -1,6 +1,8 @@
-use diesel::prelude::*;
-use duel_bot::*;
 use std::env::args;
+
+use diesel::prelude::*;
+
+use duel_bot::db::establish_connection;
 
 fn main() {
     use self::schema::chatters::dsl::*;

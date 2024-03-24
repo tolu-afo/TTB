@@ -1,6 +1,7 @@
 use diesel::prelude::*;
+
+use duel_bot::db::establish_connection;
 use duel_bot::models::*;
-use duel_bot::*;
 
 fn main() {
     use duel_bot::establish_connection;
