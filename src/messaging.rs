@@ -1,3 +1,4 @@
+use crate::chatter::add_points;
 use crate::commands;
 use crate::db;
 use crate::state::State;
@@ -28,10 +29,11 @@ pub async fn on_msg(
     println!("{}: {}", msg.sender().name(), msg.text());
 
     db::record_user_presence(&msg.sender().id(), &msg.sender().name());
+    add_points(&msg.sender().id(), 5);
 
     // TODO: add answer command
-    // TODO: add !points command
     match msg.text().split_ascii_whitespace().next() {
+        Some("!points") => commands::handle_points_command(client, &msg).await,
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
         Some("!accept") => commands::handle_accept_command(client, msg, bot_state).await,

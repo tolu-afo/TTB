@@ -96,7 +96,7 @@ pub fn record_user_presence(twitch_id: &str, username: &str) -> Chatter {
 fn db_update_points(conn: &mut PgConnection, id: &str, new_points: i32) {
     use crate::schema::chatters::dsl::{chatters, points, twitch_id};
 
-    let chatter = diesel::update(chatters.filter(twitch_id.eq(twitch_id)))
+    let chatter = diesel::update(chatters.filter(twitch_id.eq(id)))
         .set(points.eq(new_points))
         .execute(conn)
         .expect("Points value should be i32");
