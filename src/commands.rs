@@ -1,12 +1,25 @@
+use std::num::NonZeroU32;
+
 use crate::duel;
 use crate::state::State;
-use std::num::NonZeroU32;
 
 pub async fn handle_yo_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     crate::messaging::reply_to(client, msg, "yo").await
+}
+
+pub async fn handle_points_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    use crate::chatter::get_points;
+
+    let points = get_points(msg.sender().id());
+
+    let reply = format!("@{}, you have {} point(s)!", msg.sender().name(), points);
+    crate::messaging::reply_to(client, msg, &reply).await
 }
 
 pub async fn handle_commands_command(

@@ -4,8 +4,8 @@ use duel_bot::db::establish_connection;
 use duel_bot::models::*;
 
 fn main() {
-    use duel_bot::establish_connection;
     use duel_bot::schema::chatters::dsl::chatters;
+    use establish_connection;
 
     let connection = &mut establish_connection();
 
