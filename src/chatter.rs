@@ -3,7 +3,7 @@ use std::str::FromStr;
 use anyhow::{anyhow, Result};
 use log::info;
 
-use duel_bot::{get_chatter, update_losses, update_points, update_wins};
+use crate::db::{get_chatter, update_losses, update_points, update_wins};
 
 // top 3 duelists
 

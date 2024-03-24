@@ -1,6 +1,6 @@
 use crate::commands;
+use crate::db;
 use crate::state::State;
-use duel_bot::*;
 
 pub async fn send_duel_err(
     challenger: &str,
@@ -27,7 +27,7 @@ pub async fn on_msg(
 ) -> anyhow::Result<()> {
     println!("{}: {}", msg.sender().name(), msg.text());
 
-    record_user_presence(&msg.sender().id(), &msg.sender().name());
+    db::record_user_presence(&msg.sender().id(), &msg.sender().name());
 
     // TODO: add answer command
     // TODO: add !points command
