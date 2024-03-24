@@ -34,7 +34,6 @@ impl Duel {
         //     TODO: Add Question to Duel object
     }
 
-
     fn award_winner(&mut self, username: TwitchUserId) -> () {}
 }
 

@@ -11,3 +11,16 @@ diesel::table! {
         last_seen -> Timestamp,
     }
 }
+
+diesel::table! {
+    duels (id) {
+        id -> Int4,
+        accepted -> Bool,
+        points -> Int4,
+        challenger -> Varchar,
+        challenged -> Varchar,
+        winner -> Nullable<Varchar>,
+    }
+}
+
+diesel::allow_tables_to_appear_in_same_query!(chatters, duels,);

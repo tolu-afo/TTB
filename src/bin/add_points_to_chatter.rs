@@ -1,12 +1,16 @@
-use self::models::Chatter;
-use diesel::prelude::*;
-use duel_bot::*;
 use std::env::args;
-use std::ops::Add;
+
+use diesel::prelude::*;
+
+use duel_bot::db::establish_connection;
+use duel_bot::models::Chatter;
+use duel_bot::schema::chatters::dsl::chatters;
 use duel_bot::schema::chatters::points;
 
+use self::models::Chatter;
+
 fn main() {
-    use self::schema::chatters::dsl::{chatters, points};
+    use duel_bot::schema::chatters::dsl::{chatters, points};
 
     let id = args()
         .nth(1)
@@ -33,5 +37,8 @@ fn main() {
         .get_result(connection)
         .unwrap();
 
-    println!("Updated Chatter {}; points update to: {}", chatter.username, chatter.points);
+    println!(
+        "Updated Chatter {}; points update to: {}",
+        chatter.username, chatter.points
+    );
 }

@@ -1,7 +1,8 @@
-use duel_bot::*;
-use std::io::{stdin, Read};
+use std::io::stdin;
 
-fn main(){
+use duel_bot::db::{create_chatter, establish_connection};
+
+fn main() {
     let connection = &mut establish_connection();
 
     let mut username = String::new();

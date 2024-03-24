@@ -1,21 +1,22 @@
 use anyhow::Result;
 use dotenv::dotenv;
-use state::State;
 use tmi::client::ConnectError;
 use tmi::Client;
 use tokio::select;
 use tokio::signal::ctrl_c;
-
 use twitch_api2::{helix::channels::GetChannelInformationRequest, TwitchClient};
+
+use state::State;
 
 mod chatter;
 mod commands;
 mod content;
+mod db;
 mod duel;
 mod messaging;
-mod state;
 mod models;
 mod schema;
+mod state;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {

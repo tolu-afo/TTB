@@ -1,8 +1,10 @@
-use self::models::Chatter;
-use diesel::prelude::*;
-use duel_bot::*;
 use std::env::args;
 
+use diesel::prelude::*;
+
+use duel_bot::db::establish_connection;
+
+use self::models::Chatter;
 
 fn main() {
     use self::schema::chatters::dsl::chatters;
@@ -22,16 +24,12 @@ fn main() {
         .optional();
 
     match chatter {
-        Ok(Some(chatter)) => println!("Chatter with id: {} has a username: {}, {} points, {} win(s), and {} loss(es)",
-                                      chatter.id,
-                                      chatter.username,
-                                      chatter.points,
-                                      chatter.wins,
-                                      chatter.losses
+        Ok(Some(chatter)) => println!(
+            "Chatter with id: {} has a username: {}, {} points, {} win(s), and {} loss(es)",
+            chatter.id, chatter.username, chatter.points, chatter.wins, chatter.losses
         ),
 
         Ok(None) => println!("Unable to find chatter {}", chatter_id),
         Err(_) => println!("An error occurred while fetching chatter {}", chatter_id),
     }
-
 }
