@@ -1,7 +1,7 @@
 use anyhow::Result;
 use dotenv::dotenv;
-use tmi::client::ConnectError;
 use tmi::Client;
+use tmi::client::ConnectError;
 use tokio::select;
 use tokio::signal::ctrl_c;
 use twitch_api2::{helix::channels::GetChannelInformationRequest, TwitchClient};
@@ -21,7 +21,8 @@ mod state;
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     dotenv().ok();
-    // TODO: Add a database for chatters, duels, & bot state
+    // TODO: Add Console Helpers to clean up stale(unaccepted) duels
+    // TODO: Add created_at to Duels table
     let broadcaster_id =
         std::env::var("TOLUAFO_BROADCASTER_ID").expect("TOLUAFO_BROADCASTER_ID must be set");
     let client_secret = std::env::var("CLIENT_SECRET")
