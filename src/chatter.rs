@@ -30,15 +30,6 @@ impl std::fmt::Display for TwitchUserId {
 
 // TODO: Add Points NewType Idiom https://doc.rust-lang.org/rust-by-example/generics/new_types.html
 
-#[derive(Debug, Clone)]
-pub struct Chatter {
-    id: u32,
-    username: TwitchUserId,
-    points: u32,
-    wins: u32,
-    losses: u32,
-}
-
 pub fn add_points(twitch_id: &str, points: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {

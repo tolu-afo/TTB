@@ -20,7 +20,12 @@ diesel::table! {
         challenger -> Varchar,
         challenged -> Varchar,
         winner -> Nullable<Varchar>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(chatters, duels,);
+diesel::allow_tables_to_appear_in_same_query!(
+    chatters,
+    duels,
+);

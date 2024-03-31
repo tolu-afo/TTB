@@ -1,7 +1,4 @@
-use std::num::NonZeroU32;
-
-use crate::duel;
-use crate::state::State;
+use crate::db::{accept_duel, create_duel, get_chatter_by_username};
 
 pub async fn handle_yo_command(
     client: &mut tmi::Client,
@@ -31,14 +28,14 @@ pub async fn handle_commands_command(
 
 pub async fn handle_accept_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
-    bot_state: &mut State,
+    msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     // check that username of msg matches a challenged in a duel
     // !accept @<user>
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
     let challenged = msg.sender().name();
+    let challenged_id = msg.sender().id();
     let challenger = match cmd_iter.next() {
         Some(chal) => match chal.chars().nth(0) {
             Some('@') => &chal[1..],
@@ -48,48 +45,54 @@ pub async fn handle_accept_command(
             return crate::messaging::send_duel_err(
                 &challenged,
                 client,
-                msg,
+                &msg,
                 "You need to provide a username in the format @<user> or <user>",
             )
             .await;
         }
     };
-    let key = format!("{}{}", challenger, challenged);
-    let duel = match bot_state.duel_cache.get_mut(&key) {
-        Some(d) => {
-            d.accept_duel();
-            d
-        }
+
+    let challenger_id = match get_chatter_by_username(challenger) {
+        Some(chatter) => chatter.twitch_id,
         None => {
-            return crate::messaging::send_duel_err(&challenged, client, msg, "Wrong opponent!")
-                .await;
+            return crate::messaging::send_duel_err(
+                &challenged,
+                client,
+                &msg,
+                "Please @ the user who challenged you.",
+            )
+            .await;
         }
     };
+
+    // let key = format!("{}{}", challenger, challenged);
+    // TODO: replace below code
+    accept_duel(&challenger_id, challenged_id);
 
     // duel
     let _ = crate::messaging::send_msg(
         client,
         &msg,
         &format!(
-            "@{} @{} the duel has been accepted! Prepare to battle in 3 seconds",
+            "@{} @{} the duel has been accepted! Prepare to Battle!",
             challenger, challenged
         ),
     )
     .await;
-    duel.ask_question(client, &msg).await;
+    // duel.ask_question(client, &msg).await;
 
-    // TODO: Run Duel, Get Winner, Give Points, remove duel from cache.
+    // TODO: Run Duel, Get Winner, Give Points
     return Ok(());
 }
 
 pub async fn handle_duel_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
-    bot_state: &mut State,
+    msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
-    let challenger = dbg!(msg.sender().name());
+
+    let challenger = msg.sender().id();
     let challenged = match dbg!(cmd_iter.next()) {
         Some(chal) => {
             // filter @ symbol
@@ -102,33 +105,46 @@ pub async fn handle_duel_command(
             return crate::messaging::send_duel_err(
                 &challenger,
                 client,
-                msg,
+                &msg,
                 "You need to provide a username in the format @<user> or <user>",
             )
             .await;
         }
     };
 
-    let points = match cmd_iter.next() {
-        Some(chal) => chal,
+    let challenged_id = match get_chatter_by_username(challenged) {
+        Some(chatter) => chatter.twitch_id,
         None => {
             return crate::messaging::send_duel_err(
                 &challenger,
                 client,
-                msg,
+                &msg,
+                "You must provide a username for a user that has chatted before.",
+            )
+            .await;
+        }
+    };
+
+    let points = match cmd_iter.next() {
+        Some(p) => p,
+        None => {
+            return crate::messaging::send_duel_err(
+                &challenger,
+                client,
+                &msg,
                 "You need to provide a point value.",
             )
             .await;
         }
     };
 
-    let points: NonZeroU32 = match points.parse() {
+    let points: i32 = match points.parse() {
         Ok(p) => p,
         Err(_) => {
             return crate::messaging::send_duel_err(
                 &challenger,
                 client,
-                msg,
+                &msg,
                 "Provide a valid point value.",
             )
             .await;
@@ -140,15 +156,12 @@ pub async fn handle_duel_command(
             .await;
     }
 
-    let curr_duel = duel::Duel::new(&challenger, &challenged, points, bot_state);
-
-    bot_state.save_duel(&curr_duel);
-    dbg!(curr_duel);
+    let curr_duel = create_duel(&challenger, &challenged_id, points);
 
     crate::messaging::reply_to(
         client,
         &msg,
-        &format!("@{} Challenge Announced", challenger),
+        &format!("@{} Challenge Announced", challenged),
     )
     .await
 }

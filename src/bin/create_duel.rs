@@ -1,5 +1,6 @@
-use duel_bot::*;
-use std::io::{stdin, Read};
+use std::io::stdin;
+
+use duel_bot::db::{db_create_duel, establish_connection};
 
 fn main() {
     let connection = &mut establish_connection();
@@ -20,6 +21,6 @@ fn main() {
     stdin().read_line(&mut points).unwrap();
     let points = points.trim_end().parse().expect("Should be a number"); // Remove the trailing newline
 
-    let duel = create_duel(connection, challenger, challenged, points);
+    let duel = db_create_duel(connection, challenger, challenged, points);
     println!("\nSaved duel with id {}", duel.id);
 }

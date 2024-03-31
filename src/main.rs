@@ -1,12 +1,9 @@
 use anyhow::Result;
 use dotenv::dotenv;
-use tmi::Client;
 use tmi::client::ConnectError;
+use tmi::Client;
 use tokio::select;
 use tokio::signal::ctrl_c;
-use twitch_api2::{helix::channels::GetChannelInformationRequest, TwitchClient};
-
-use state::State;
 
 mod chatter;
 mod commands;
@@ -16,19 +13,17 @@ mod duel;
 mod messaging;
 mod models;
 mod schema;
-mod state;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     dotenv().ok();
     // TODO: Add Console Helpers to clean up stale(unaccepted) duels
-    // TODO: Add created_at to Duels table
     let broadcaster_id =
         std::env::var("TOLUAFO_BROADCASTER_ID").expect("TOLUAFO_BROADCASTER_ID must be set");
-    let client_secret = std::env::var("CLIENT_SECRET")
+    let client_secret: String = std::env::var("CLIENT_SECRET")
         .expect("CLIENT_SECRET must be set.")
         .into();
-    let client_id = std::env::var("CLIENT_ID")
+    let client_id: String = std::env::var("CLIENT_ID")
         .expect("CLIENT_ID must be set.")
         .into();
 
@@ -36,11 +31,10 @@ async fn main() -> Result<()> {
     let oauth = std::fmt::format(format_args!("oauth:{}", token));
     let user: String = std::env::var("BONGO_USER").expect("BONGO_USER must be set.");
 
-    let mut client =
-        match get_client(broadcaster_id, client_secret, client_id, token, oauth, user).await {
-            Ok(c) => c,
-            Err(err) => panic!("Connection was not successful!"),
-        };
+    let mut client = match get_client(broadcaster_id, oauth, user).await {
+        Ok(c) => c,
+        Err(err) => panic!("Connection was not successful!"),
+    };
 
     let channels = vec!["#ToluAfo".to_string()]
         .into_iter()
@@ -62,17 +56,14 @@ async fn main() -> Result<()> {
 
 async fn get_client(
     broadcaster_id: String,
-    client_secret: String,
-    client_id: String,
-    token: String,
     oauth: String,
     user: String,
 ) -> Result<Client, ConnectError> {
-    let twitch_client: TwitchClient<reqwest::Client> = TwitchClient::default();
+    // let twitch_client: TwitchClient<reqwest::Client> = TwitchClient::default();
 
-    let req = GetChannelInformationRequest::builder()
-        .broadcaster_id(broadcaster_id)
-        .build();
+    // let req = GetChannelInformationRequest::builder()
+    //     .broadcaster_id(broadcaster_id)
+    //     .build();
 
     let credentials = tmi::client::Credentials::new(user, oauth);
 
@@ -85,14 +76,10 @@ async fn get_client(
 }
 
 async fn run(mut client: tmi::Client, channels: Vec<tmi::Channel>) -> Result<()> {
-    let mut bot_state = State::new();
-
     loop {
         let msg = client.recv().await?;
         match msg.as_typed()? {
-            tmi::Message::Privmsg(msg) => {
-                messaging::on_msg(&mut client, msg, &mut bot_state).await?
-            }
+            tmi::Message::Privmsg(msg) => messaging::on_msg(&mut client, msg).await?,
             tmi::Message::Reconnect => {
                 client.reconnect().await?;
                 client.join_all(&channels).await?;

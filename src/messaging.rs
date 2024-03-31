@@ -1,12 +1,11 @@
 use crate::chatter::add_points;
 use crate::commands;
 use crate::db;
-use crate::state::State;
 
 pub async fn send_duel_err(
     challenger: &str,
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
     err: &str,
 ) -> anyhow::Result<()> {
     send_msg(client, &msg, &format!("@{} Error; {}", challenger, err)).await
@@ -21,11 +20,7 @@ pub async fn send_msg(
     Ok(())
 }
 
-pub async fn on_msg(
-    client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
-    bot_state: &mut State,
-) -> anyhow::Result<()> {
+pub async fn on_msg(client: &mut tmi::Client, msg: tmi::Privmsg<'_>) -> anyhow::Result<()> {
     println!("{}: {}", msg.sender().name(), msg.text());
 
     db::record_user_presence(&msg.sender().id(), &msg.sender().name());
@@ -36,8 +31,8 @@ pub async fn on_msg(
         Some("!points") => commands::handle_points_command(client, &msg).await,
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
-        Some("!accept") => commands::handle_accept_command(client, msg, bot_state).await,
-        Some("!challenge") => commands::handle_duel_command(client, msg, bot_state).await,
+        Some("!accept") => commands::handle_accept_command(client, &msg).await,
+        Some("!challenge") => commands::handle_duel_command(client, &msg).await,
         _ => Ok(()),
     }
 }

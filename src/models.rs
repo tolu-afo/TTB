@@ -1,6 +1,9 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
+use crate::schema::chatters;
+use crate::schema::duels;
+
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = crate::schema::chatters)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -24,9 +27,9 @@ pub struct Duel {
     pub challenger: String,
     pub challenged: String,
     pub winner: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
-
-use crate::schema::chatters;
 
 #[derive(Insertable)]
 #[diesel(table_name = chatters)]
@@ -34,8 +37,6 @@ pub struct NewChatter<'a> {
     pub twitch_id: &'a str,
     pub username: &'a str,
 }
-
-use crate::schema::duels;
 
 #[derive(Insertable)]
 #[diesel(table_name = duels)]
