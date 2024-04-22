@@ -20,10 +20,10 @@ async fn main() -> Result<()> {
     // TODO: Add Console Helpers to clean up stale(unaccepted) duels
     let broadcaster_id =
         std::env::var("TOLUAFO_BROADCASTER_ID").expect("TOLUAFO_BROADCASTER_ID must be set");
-    let client_secret: String = std::env::var("CLIENT_SECRET")
+    let _client_secret: String = std::env::var("CLIENT_SECRET")
         .expect("CLIENT_SECRET must be set.")
         .into();
-    let client_id: String = std::env::var("CLIENT_ID")
+    let _client_id: String = std::env::var("CLIENT_ID")
         .expect("CLIENT_ID must be set.")
         .into();
 
@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
 
     let mut client = match get_client(broadcaster_id, oauth, user).await {
         Ok(c) => c,
-        Err(err) => panic!("Connection was not successful!"),
+        Err(_err) => panic!("Connection was not successful!"),
     };
 
     let channels = vec!["#ToluAfo".to_string()]
@@ -55,7 +55,7 @@ async fn main() -> Result<()> {
 }
 
 async fn get_client(
-    broadcaster_id: String,
+    _broadcaster_id: String,
     oauth: String,
     user: String,
 ) -> Result<Client, ConnectError> {
@@ -68,7 +68,7 @@ async fn get_client(
     let credentials = tmi::client::Credentials::new(user, oauth);
 
     println!("Connecting as {}", credentials.nick);
-    let mut client = tmi::Client::builder()
+    let client = tmi::Client::builder()
         .credentials(credentials)
         .connect()
         .await?;

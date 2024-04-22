@@ -1,4 +1,4 @@
-use crate::chatter::add_points;
+use crate::chatter::{add_points, TwitchId};
 use crate::commands;
 use crate::db;
 
@@ -22,9 +22,9 @@ pub async fn send_msg(
 
 pub async fn on_msg(client: &mut tmi::Client, msg: tmi::Privmsg<'_>) -> anyhow::Result<()> {
     println!("{}: {}", msg.sender().name(), msg.text());
-
-    db::record_user_presence(&msg.sender().id(), &msg.sender().name());
-    add_points(&msg.sender().id(), 5);
+    let user_id: TwitchId = msg.sender().id().parse().unwrap();
+    db::record_user_presence(user_id, &msg.sender().name());
+    add_points(user_id, 5);
 
     // TODO: add answer command
     match msg.text().split_ascii_whitespace().next() {

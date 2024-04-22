@@ -1,0 +1,18 @@
+-- Your SQL goes here
+ALTER TABLE chatters
+    ADD COLUMN twitch_id_new integer UNIQUE;
+
+UPDATE chatters
+SET twitch_id_new=CAST(twitch_id AS integer);
+
+ALTER TABLE chatters
+    DROP COLUMN twitch_id;
+
+ALTER TABLE chatters
+    RENAME COLUMN twitch_id_new TO twitch_id;
+
+ALTER TABLE chatters
+    ALTER COLUMN twitch_id SET NOT NULL;
+
+
+

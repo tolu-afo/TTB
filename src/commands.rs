@@ -1,3 +1,4 @@
+use crate::chatter::TwitchId;
 use crate::db::{accept_duel, create_duel, get_chatter_by_username};
 
 pub async fn handle_yo_command(
@@ -12,8 +13,8 @@ pub async fn handle_points_command(
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     use crate::chatter::get_points;
-
-    let points = get_points(msg.sender().id());
+    let user_id: TwitchId = msg.sender().id().parse().unwrap();
+    let points = get_points(user_id);
 
     let reply = format!("@{}, you have {} point(s)!", msg.sender().name(), points);
     crate::messaging::reply_to(client, msg, &reply).await
@@ -35,7 +36,7 @@ pub async fn handle_accept_command(
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
     let challenged = msg.sender().name();
-    let challenged_id = msg.sender().id();
+    let challenged_id: TwitchId = msg.sender().id().parse().unwrap();
     let challenger = match cmd_iter.next() {
         Some(chal) => match chal.chars().nth(0) {
             Some('@') => &chal[1..],
@@ -67,7 +68,7 @@ pub async fn handle_accept_command(
 
     // let key = format!("{}{}", challenger, challenged);
     // TODO: replace below code
-    accept_duel(&challenger_id, challenged_id);
+    accept_duel(challenger_id, challenged_id);
 
     // duel
     let _ = crate::messaging::send_msg(
@@ -89,10 +90,11 @@ pub async fn handle_duel_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
-    let mut cmd_iter = msg.text().split(' ');
+    let mut cmd_iter = msg.text().split_ascii_whitespace();
     cmd_iter.next();
 
-    let challenger = msg.sender().id();
+    let challenger = &msg.sender().name();
+    let challenger_id: TwitchId = msg.sender().id().parse().unwrap();
     let challenged = match dbg!(cmd_iter.next()) {
         Some(chal) => {
             // filter @ symbol
@@ -151,12 +153,22 @@ pub async fn handle_duel_command(
         }
     };
 
+    if (points <= 0) {
+        return crate::messaging::send_duel_err(
+            &challenger,
+            client,
+            &msg,
+            "Provide a valid point value.",
+        )
+        .await;
+    }
+
     if cmd_iter.next().is_some() {
         return crate::messaging::send_duel_err(&challenger, client, msg, "Too many arguments!")
             .await;
     }
 
-    let curr_duel = create_duel(&challenger, &challenged_id, points);
+    let _curr_duel = create_duel(challenger_id, challenged_id, points);
 
     crate::messaging::reply_to(
         client,

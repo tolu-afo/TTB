@@ -6,11 +6,12 @@ use diesel::prelude::*;
 use dotenv::dotenv;
 use log::info;
 
+use crate::chatter::TwitchId;
 use crate::models::{Chatter, Duel, NewChatter, NewDuel};
 // TODO: Import to each function what they need.
-use crate::schema::chatters::dsl::*;
 use crate::schema::duels;
-use crate::schema::duels::dsl::*;
+
+// use crate::schema::duels::dsl::*;
 
 // TODO: Refactor to one Connection, or enable/confirm connection pooling
 
@@ -22,7 +23,11 @@ pub fn establish_connection() -> PgConnection {
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub fn create_chatter(conn: &mut PgConnection, chatter_id: &str, chatter_name: &str) -> Chatter {
+pub fn create_chatter(
+    conn: &mut PgConnection,
+    chatter_id: TwitchId,
+    chatter_name: &str,
+) -> Chatter {
     use crate::schema::chatters;
 
     let new_chatter = NewChatter {
@@ -37,7 +42,8 @@ pub fn create_chatter(conn: &mut PgConnection, chatter_id: &str, chatter_name: &
         .expect("Error saving new chatter")
 }
 
-pub fn db_get_chatter(conn: &mut PgConnection, chatter_id: &str) -> Option<Chatter> {
+pub fn db_get_chatter(conn: &mut PgConnection, chatter_id: TwitchId) -> Option<Chatter> {
+    use crate::schema::chatters::dsl::{chatters, twitch_id};
     let chatter = chatters
         .filter(twitch_id.eq(chatter_id))
         .select(Chatter::as_select())
@@ -50,11 +56,12 @@ pub fn db_get_chatter(conn: &mut PgConnection, chatter_id: &str) -> Option<Chatt
     })
 }
 
-pub fn get_chatter(chatter_id: &str) -> Option<Chatter> {
+pub fn get_chatter(chatter_id: TwitchId) -> Option<Chatter> {
     db_get_chatter(&mut establish_connection(), chatter_id)
 }
 
 pub fn db_get_chatter_by_username(conn: &mut PgConnection, chatter_name: &str) -> Option<Chatter> {
+    use crate::schema::chatters::dsl::{chatters, username};
     let chatter = chatters
         .filter(username.eq(chatter_name))
         .select(Chatter::as_select())
@@ -72,6 +79,7 @@ pub fn get_chatter_by_username(chatter_name: &str) -> Option<Chatter> {
 }
 
 fn update_last_seen(conn: &mut PgConnection, pk: i32) {
+    use crate::schema::chatters::dsl::{chatters, last_seen};
     diesel::update(chatters.find(pk))
         .set(last_seen.eq(dsl::now))
         .returning(Chatter::as_returning())
@@ -79,7 +87,8 @@ fn update_last_seen(conn: &mut PgConnection, pk: i32) {
         .expect("Wrong Chatter ID");
 }
 
-fn update_username(conn: &mut PgConnection, chatter_id: i32, new_username: &str) {
+fn update_username(conn: &mut PgConnection, chatter_id: TwitchId, new_username: &str) {
+    use crate::schema::chatters::dsl::{chatters, twitch_id, username};
     diesel::update(chatters.filter(twitch_id.eq(chatter_id)))
         .set(username.eq(new_username))
         .returning(Chatter::as_returning())
@@ -87,7 +96,7 @@ fn update_username(conn: &mut PgConnection, chatter_id: i32, new_username: &str)
         .expect("Wrong Chatter ID");
 }
 
-pub fn record_user_presence(chatter_id: &str, chatter_name: &str) -> Chatter {
+pub fn record_user_presence(chatter_id: TwitchId, chatter_name: &str) -> Chatter {
     let conn = &mut establish_connection();
 
     match db_get_chatter(conn, chatter_id) {
@@ -95,7 +104,7 @@ pub fn record_user_presence(chatter_id: &str, chatter_name: &str) -> Chatter {
             info!("Chatter found for {}", chatter.username);
             update_last_seen(conn, chatter.id);
             if chatter.username != chatter_name {
-                update_username(conn, chatter.id, chatter_name);
+                update_username(conn, chatter.twitch_id, chatter_name);
             }
             chatter
         }
@@ -107,44 +116,46 @@ pub fn record_user_presence(chatter_id: &str, chatter_name: &str) -> Chatter {
     }
 }
 
-fn db_update_points(conn: &mut PgConnection, chatter_id: &str, new_points: i32) {
-    use crate::schema::duels::dsl::points;
-    let chatter = diesel::update(chatters.filter(twitch_id.eq(chatter_id)))
+fn db_update_points(conn: &mut PgConnection, chatter_id: TwitchId, new_points: i32) {
+    use crate::schema::chatters::dsl::{chatters, points, twitch_id};
+    let _chatter = diesel::update(chatters.filter(twitch_id.eq(chatter_id)))
         .set(points.eq(new_points))
         .execute(conn)
         .expect("Points value should be i32");
 }
 
-pub fn update_points(chatter_id: &str, new_points: i32) {
+pub fn update_points(chatter_id: TwitchId, new_points: i32) {
     db_update_points(&mut establish_connection(), chatter_id, new_points)
 }
 
-fn db_update_wins(conn: &mut PgConnection, chatter_id: &str, new_wins: i32) {
-    let chatter = diesel::update(chatters.filter(twitch_id.eq(chatter_id)))
+fn db_update_wins(conn: &mut PgConnection, chatter_id: TwitchId, new_wins: i32) {
+    use crate::schema::chatters::dsl::{chatters, twitch_id, wins};
+    let _chatter = diesel::update(chatters.filter(twitch_id.eq(chatter_id)))
         .set(wins.eq(new_wins))
         .execute(conn)
         .expect("Wins value should be i32");
 }
 
-pub fn update_wins(chatter_id: &str, new_wins: i32) {
+pub fn update_wins(chatter_id: TwitchId, new_wins: i32) {
     db_update_wins(&mut establish_connection(), chatter_id, new_wins);
 }
 
-fn db_update_losses(conn: &mut PgConnection, chatter_id: &str, new_losses: i32) {
-    let chatter = diesel::update(chatters.filter(twitch_id.eq(chatter_id)))
+fn db_update_losses(conn: &mut PgConnection, chatter_id: TwitchId, new_losses: i32) {
+    use crate::schema::chatters::dsl::{chatters, losses, twitch_id};
+    let _chatter = diesel::update(chatters.filter(twitch_id.eq(chatter_id)))
         .set(losses.eq(new_losses))
         .execute(conn)
         .expect("Losses value should be i32");
 }
 
-pub fn update_losses(chatter_id: &str, new_losses: i32) {
+pub fn update_losses(chatter_id: TwitchId, new_losses: i32) {
     db_update_losses(&mut establish_connection(), chatter_id, new_losses);
 }
 
 fn db_create_duel(
     conn: &mut PgConnection,
-    challenger_id: &str,
-    challenged_id: &str,
+    challenger_id: TwitchId,
+    challenged_id: TwitchId,
     new_points: i32,
 ) -> Duel {
     let new_duel = NewDuel {
@@ -160,7 +171,7 @@ fn db_create_duel(
         .expect("Error saving new duel")
 }
 
-pub fn create_duel(challenger_id: &str, challenged_id: &str, new_points: i32) -> Duel {
+pub fn create_duel(challenger_id: TwitchId, challenged_id: TwitchId, new_points: i32) -> Duel {
     db_create_duel(
         &mut establish_connection(),
         challenger_id,
@@ -169,7 +180,8 @@ pub fn create_duel(challenger_id: &str, challenged_id: &str, new_points: i32) ->
     )
 }
 
-fn db_accept_duel(conn: &mut PgConnection, challenger_id: &str, challenged_id: &str) {
+fn db_accept_duel(conn: &mut PgConnection, challenger_id: TwitchId, challenged_id: TwitchId) {
+    use crate::schema::duels::dsl::{accepted, challenged, challenger, duels};
     diesel::update(
         duels
             .filter(challenged.eq(challenged_id))
@@ -181,6 +193,6 @@ fn db_accept_duel(conn: &mut PgConnection, challenger_id: &str, challenged_id: &
     .expect("This duel does not exist");
 }
 
-pub fn accept_duel(challenger_id: &str, challenged_id: &str) {
+pub fn accept_duel(challenger_id: TwitchId, challenged_id: TwitchId) {
     db_accept_duel(&mut establish_connection(), challenger_id, challenged_id);
 }

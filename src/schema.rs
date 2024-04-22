@@ -3,12 +3,12 @@
 diesel::table! {
     chatters (id) {
         id -> Int4,
-        twitch_id -> Varchar,
         username -> Varchar,
         points -> Int4,
         wins -> Int4,
         losses -> Int4,
         last_seen -> Timestamp,
+        twitch_id -> Int4,
     }
 }
 
@@ -17,11 +17,11 @@ diesel::table! {
         id -> Int4,
         accepted -> Bool,
         points -> Int4,
-        challenger -> Varchar,
-        challenged -> Varchar,
-        winner -> Nullable<Varchar>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        challenger -> Int4,
+        challenged -> Int4,
+        winner -> Nullable<Int4>,
     }
 }
 

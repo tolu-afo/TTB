@@ -8,21 +8,23 @@ use crate::db::{get_chatter, update_losses, update_points, update_wins};
 // top 3 duelists
 
 #[derive(Debug, Clone)]
-pub struct TwitchUserId(String);
+pub struct TwitchUsername(String);
 
-impl FromStr for TwitchUserId {
+pub type TwitchId = i32;
+
+impl FromStr for TwitchUsername {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         dbg!(s);
         if s.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '_') {
-            Ok(TwitchUserId(String::from(s)))
+            Ok(TwitchUsername(String::from(s)))
         } else {
             Err(anyhow!("valid handles only contain characters 0-9 and a-f"))
         }
     }
 }
 
-impl std::fmt::Display for TwitchUserId {
+impl std::fmt::Display for TwitchUsername {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -30,7 +32,7 @@ impl std::fmt::Display for TwitchUserId {
 
 // TODO: Add Points NewType Idiom https://doc.rust-lang.org/rust-by-example/generics/new_types.html
 
-pub fn add_points(twitch_id: &str, points: i32) -> () {
+pub fn add_points(twitch_id: TwitchId, points: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_points = chatter.points + points;
@@ -40,7 +42,7 @@ pub fn add_points(twitch_id: &str, points: i32) -> () {
     }
 }
 
-pub fn subtract_points(twitch_id: &str, points: i32) -> () {
+pub fn _subtract_points(twitch_id: TwitchId, points: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_points = chatter.points - points;
@@ -50,7 +52,7 @@ pub fn subtract_points(twitch_id: &str, points: i32) -> () {
     }
 }
 
-pub fn get_points(twitch_id: &str) -> i32 {
+pub fn get_points(twitch_id: TwitchId) -> i32 {
     match get_chatter(twitch_id) {
         Some(chatter) => chatter.points,
         None => {
@@ -60,7 +62,7 @@ pub fn get_points(twitch_id: &str) -> i32 {
     }
 }
 
-pub fn add_win(twitch_id: &str) -> () {
+pub fn _add_win(twitch_id: TwitchId) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_wins = chatter.wins + 1;
@@ -70,7 +72,7 @@ pub fn add_win(twitch_id: &str) -> () {
     }
 }
 
-pub fn subtract_win(twitch_id: &str) -> () {
+pub fn _subtract_win(twitch_id: TwitchId) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_wins = chatter.wins - 1;
@@ -80,7 +82,7 @@ pub fn subtract_win(twitch_id: &str) -> () {
     }
 }
 
-pub fn add_loss(twitch_id: &str) -> () {
+pub fn _add_loss(twitch_id: TwitchId) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_losses = chatter.losses + 1;
@@ -90,7 +92,7 @@ pub fn add_loss(twitch_id: &str) -> () {
     }
 }
 
-pub fn subtract_loss(twitch_id: &str) -> () {
+pub fn _subtract_loss(twitch_id: TwitchId) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_losses = chatter.losses - 1;
