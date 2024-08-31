@@ -130,7 +130,7 @@ pub fn update_losses(id: &str, losses: i32) {
     db_update_losses(&mut establish_connection(), id, losses);
 }
 
-pub fn create_duel(
+fn db_create_duel(
     conn: &mut PgConnection,
     challenger: &str,
     challenged: &str,
@@ -148,4 +148,65 @@ pub fn create_duel(
         .returning(Duel::as_returning())
         .get_result(conn)
         .expect("Error saving new duel")
+}
+
+pub fn create_duel(challenger: &str, challenged: &str, points: i32) -> Duel {
+    db_create_duel(&mut establish_connection(), challenger, challenged, points)
+}
+
+fn db_get_duel(conn: &mut PgConnection, id: i32) -> Option<Duel> {
+    use crate::schema::duels::dsl::{duels, id as duel_id};
+
+    let duel = duels
+        .find(id)
+        .select(Duel::as_select())
+        .first(conn)
+        .optional();
+
+    duel.unwrap_or_else(|_| {
+        println!("An error occurred while fetching duel {}", id);
+        None
+    })
+}
+
+pub fn get_duel(duel_id: i32) -> Option<Duel> {
+    db_get_duel(&mut establish_connection(), duel_id)
+}
+
+fn db_set_question_duel(
+    conn: &mut PgConnection,
+    id: i32,
+    question: &str,
+    answer: &str,
+    status: &str,
+) {
+    use crate::schema::duels::dsl::{
+        answer as duel_answer, duels, question as duel_question, status as duel_status,
+    };
+
+    diesel::update(duels.find(id))
+        .set((
+            duel_status.eq(status),
+            duel_question.eq(question),
+            duel_answer.eq(answer),
+        ))
+        .execute(conn)
+        .expect("Winner should be a valid twitch id");
+}
+
+pub fn set_question_duel(id: i32, question: &str, answer: &str, status: &str) {
+    db_set_question_duel(&mut establish_connection(), id, question, answer, status);
+}
+
+fn db_complete_duel(conn: &mut PgConnection, id: i32, winner: &str, status: &str) {
+    use crate::schema::duels::dsl::{duels, status as duel_status, winner as winner_id};
+
+    diesel::update(duels.find(id))
+        .set((winner_id.eq(winner), duel_status.eq(status)))
+        .execute(conn)
+        .expect("Winner should be a valid twitch id");
+}
+
+pub fn complete_duel(id: i32, winner: &str, status: &str) {
+    db_complete_duel(&mut establish_connection(), id, winner, status);
 }

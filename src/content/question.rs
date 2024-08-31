@@ -22,6 +22,14 @@ impl Question {
         let index = random % QUESTIONS.len();
         QUESTIONS[index]
     }
+
+    pub fn display_question_kind(&self) -> &'static str {
+        match self.kind {
+            QuestionKind::ProgLang => "Programming Language",
+            QuestionKind::MovieQuote => "Movie Quote",
+            QuestionKind::Scramble => "Scramble",
+        }
+    }
 }
 
 #[rustfmt::skip]

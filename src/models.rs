@@ -13,8 +13,7 @@ pub struct Chatter {
     pub losses: i32,
     pub last_seen: NaiveDateTime,
 }
-
-#[derive(Queryable, Selectable)]
+#[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::duels)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Duel {
@@ -24,6 +23,11 @@ pub struct Duel {
     pub challenger: String,
     pub challenged: String,
     pub winner: Option<String>,
+    pub status: String,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub question: Option<String>,
+    pub answer: Option<String>,
 }
 
 use crate::schema::chatters;

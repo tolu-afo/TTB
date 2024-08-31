@@ -32,12 +32,18 @@ pub async fn on_msg(
     add_points(&msg.sender().id(), 5);
 
     // TODO: add answer command
+    // TODO: add rabbit hole command
+    // TODO: add lurk command
+    // TODO: add command for adding new questions
+
     match msg.text().split_ascii_whitespace().next() {
         Some("!points") => commands::handle_points_command(client, &msg).await,
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
         Some("!accept") => commands::handle_accept_command(client, msg, bot_state).await,
+        Some("!answer") => commands::handle_answer_command(client, msg, bot_state).await,
         Some("!challenge") => commands::handle_duel_command(client, msg, bot_state).await,
+        Some("!duel") => commands::handle_duel_command(client, msg, bot_state).await,
         _ => Ok(()),
     }
 }
