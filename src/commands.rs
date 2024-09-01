@@ -1,7 +1,4 @@
-use std::num::NonZeroU32;
-
 use crate::db;
-use crate::duel;
 use crate::models;
 use crate::state::State;
 
@@ -80,7 +77,7 @@ pub async fn handle_accept_command(
     .await;
     duel.ask_question(client, &msg).await;
 
-    // TODO: Run Duel, Get Winner, Give Points, remove duel from  cache.
+    // TODO: Run Duel, Get Winner, Give Points, remove duel from cache.
     return Ok(());
 }
 
@@ -111,6 +108,10 @@ pub async fn handle_duel_command(
         }
     };
 
+    // Find challenger and challenged in chatter table
+    let challenger_chatter = db::get_chatter_by_username(&challenger).unwrap();
+    let challenged_chatter = db::get_chatter_by_username(&challenged).unwrap();
+
     let points = match cmd_iter.next() {
         Some(chal) => chal,
         None => "100",
@@ -134,10 +135,15 @@ pub async fn handle_duel_command(
             .await;
     }
 
-    let curr_duel = models::Duel::new(&challenger, &challenged, points, bot_state);
+    let curr_duel = models::Duel::new(
+        &challenger,
+        &challenged,
+        &challenged_chatter.twitch_id,
+        &challenged_chatter.twitch_id,
+        points,
+    );
 
     bot_state.save_duel(&curr_duel);
-    db::create_duel(&challenger, &challenged, points as i32);
 
     crate::messaging::reply_to(
         client,
@@ -157,12 +163,12 @@ pub async fn handle_answer_command(
 ) -> anyhow::Result<(), anyhow::Error> {
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
-    let challenger = dbg!(msg.sender().name());
+    let responder = dbg!(msg.sender().name());
     let answer = match dbg!(cmd_iter.next()) {
         Some(chal) => chal,
         None => {
             return crate::messaging::send_duel_err(
-                &challenger,
+                &responder,
                 client,
                 msg,
                 "You need to provide an answer.",
@@ -171,11 +177,25 @@ pub async fn handle_answer_command(
         }
     };
 
-    let key = format!("{}{}", challenger, challenger);
-    let duel = match bot_state.duel_cache.get_mut(&key) {
-        Some(d) => d,
+    // let key = format!("{}{}", challenger, challenger);
+    // let duel = match bot_state.duel_cache.get_mut(&key) {
+    //     Some(d) => d,
+    //     None => {
+    //         return crate::messaging::send_duel_err(&responder, client, msg, "No duel found!")
+    //             .await;
+    //     }
+    // };
+
+    let mut duel = match db::get_accepted_duel(&responder) {
+        Some(d) => match db::get_duel(d.duel_id) {
+            Some(duel) => duel,
+            None => {
+                return crate::messaging::send_duel_err(&responder, client, msg, "No duel found!")
+                    .await;
+            }
+        },
         None => {
-            return crate::messaging::send_duel_err(&challenger, client, msg, "No duel found!")
+            return crate::messaging::send_duel_err(&responder, client, msg, "No duel found!")
                 .await;
         }
     };
@@ -183,17 +203,31 @@ pub async fn handle_answer_command(
     if duel.is_winner(answer) {
         // determine which player owns the current messsage
         // compare twitch id of challenger to the twitch id of the message sender
-        let winner = if challenger == duel.challenger {
-            duel.challenger
-        } else {
-            duel.challenged
+        if responder == duel.challenger {
+            duel.award_winner(
+                &responder,
+                duel.challenger_id.clone().unwrap().as_str(),
+                duel.challenged_id.clone().unwrap().as_str(),
+            );
+            let reply_msg = format!("Correct! @{} wins the duel! @{} loses the duel! Therefore, @{} is awarded {} points, and @{} loses {} points", responder, duel.challenged, responder, duel.points, duel.challenged, duel.points / 2);
+            crate::messaging::reply_to(client, &msg, &reply_msg).await?;
+        } else if responder == duel.challenged {
+            duel.award_winner(
+                &responder,
+                duel.challenged_id.clone().unwrap().as_str(),
+                duel.challenger_id.clone().unwrap().as_str(),
+            );
+            let reply_msg = format!("Correct! @{} wins the duel! @{} loses the duel! Therefore, @{} is awarded {} points, and @{} loses {} points", responder, duel.challenger, responder, duel.points, duel.challenger, duel.points / 2);
+            crate::messaging::reply_to(client, &msg, &reply_msg).await?;
         };
-        // award points to the winner
-        duel.award_winner(&challenger);
     } else {
         // Deduct points for incorrect guess
         // send message to inform user of point deduction and incorrect guess.
         // max 5 guesses before duel is over, and challenger lose wagered points
+        // TODO: Decrement Guesses
+        // TODO: End Duel if both players have guessed incorrectly 5 times i.e. guesses go to zero
+        // TODO: Set Duel Status to Completed
+        // TODO: Destroy AcceptedDuel record in accepted_duels table
     }
 
     crate::messaging::reply_to(client, &msg, "Answered!").await

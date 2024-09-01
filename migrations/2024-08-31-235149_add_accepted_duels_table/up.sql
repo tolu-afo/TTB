@@ -1,0 +1,8 @@
+CREATE TABLE accepted_duels (
+    id SERIAL PRIMARY KEY,
+    duel_id INT NOT NULL,
+    challenger_id VARCHAR(255) NOT NULL UNIQUE,
+    challenged_id VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -4,8 +4,10 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenv::dotenv;
 use log::info;
+use tmi::client::conn;
 
-use crate::models::{Chatter, Duel, NewChatter, NewDuel};
+use crate::duel;
+use crate::models::{AcceptedDuel, Chatter, Duel, NewAcceptedDuel, NewChatter, NewDuel};
 use crate::schema::chatters::dsl::chatters;
 
 pub fn establish_connection() -> PgConnection {
@@ -48,6 +50,25 @@ pub fn db_get_chatter(conn: &mut PgConnection, chatter_id: &str) -> Option<Chatt
 
 pub fn get_chatter(chatter_id: &str) -> Option<Chatter> {
     db_get_chatter(&mut establish_connection(), chatter_id)
+}
+
+fn db_get_chatter_by_username(conn: &mut PgConnection, username: &str) -> Option<Chatter> {
+    use crate::schema::chatters::dsl::{chatters, username as chatter_name};
+
+    let chatter = chatters
+        .filter(chatter_name.eq(username))
+        .select(Chatter::as_select())
+        .first(conn)
+        .optional();
+
+    chatter.unwrap_or_else(|_| {
+        println!("An error occurred while fetching chatter {}", username);
+        None
+    })
+}
+
+pub fn get_chatter_by_username(username: &str) -> Option<Chatter> {
+    db_get_chatter_by_username(&mut establish_connection(), username)
 }
 
 fn update_last_seen(conn: &mut PgConnection, chatter_id: i32) {
@@ -134,12 +155,16 @@ fn db_create_duel(
     conn: &mut PgConnection,
     challenger: &str,
     challenged: &str,
+    challenger_id: &str,
+    challenged_id: &str,
     points: i32,
 ) -> Duel {
     use crate::schema::duels;
     let new_duel = NewDuel {
         challenger,
         challenged,
+        challenger_id: challenger_id,
+        challenged_id: challenged_id,
         points,
     };
 
@@ -150,12 +175,25 @@ fn db_create_duel(
         .expect("Error saving new duel")
 }
 
-pub fn create_duel(challenger: &str, challenged: &str, points: i32) -> Duel {
-    db_create_duel(&mut establish_connection(), challenger, challenged, points)
+pub fn create_duel(
+    challenger: &str,
+    challenged: &str,
+    challenger_id: &str,
+    challenged_id: &str,
+    points: i32,
+) -> Duel {
+    db_create_duel(
+        &mut establish_connection(),
+        challenger,
+        challenged,
+        challenger_id,
+        challenged_id,
+        points,
+    )
 }
 
 fn db_get_duel(conn: &mut PgConnection, id: i32) -> Option<Duel> {
-    use crate::schema::duels::dsl::{duels, id as duel_id};
+    use crate::schema::duels::dsl::duels;
 
     let duel = duels
         .find(id)
@@ -171,6 +209,42 @@ fn db_get_duel(conn: &mut PgConnection, id: i32) -> Option<Duel> {
 
 pub fn get_duel(duel_id: i32) -> Option<Duel> {
     db_get_duel(&mut establish_connection(), duel_id)
+}
+
+fn db_accept_duel(conn: &mut PgConnection, id: i32) {
+    use crate::schema::duels::dsl::{duels, status as duel_status};
+
+    diesel::update(duels.find(id))
+        .set(duel_status.eq("accepted"))
+        .execute(conn)
+        .expect("Duel ID should be i32");
+}
+
+pub fn accept_duel(id: i32) {
+    db_accept_duel(&mut establish_connection(), id);
+}
+
+fn db_get_accepted_duel(conn: &mut PgConnection, responder: &str) -> Option<AcceptedDuel> {
+    use crate::schema::accepted_duels::dsl::{
+        accepted_duels as duels, challenged_id as duel_challenged, challenger_id as duel_challenger,
+    };
+    let duel = duels
+        .filter(
+            duel_challenger
+                .eq(responder)
+                .or(duel_challenged.eq(responder)),
+        )
+        .select(AcceptedDuel::as_select())
+        .first(conn)
+        .optional();
+    duel.unwrap_or_else(|_| {
+        println!("An error occurred while fetching duel for {}", responder);
+        None
+    })
+}
+
+pub fn get_accepted_duel(responder: &str) -> Option<AcceptedDuel> {
+    db_get_accepted_duel(&mut establish_connection(), responder)
 }
 
 fn db_set_question_duel(
@@ -210,3 +284,51 @@ fn db_complete_duel(conn: &mut PgConnection, id: i32, winner: &str, status: &str
 pub fn complete_duel(id: i32, winner: &str, status: &str) {
     db_complete_duel(&mut establish_connection(), id, winner, status);
 }
+
+fn db_create_accepted_duel(
+    conn: &mut PgConnection,
+    duel_id: i32,
+    challenger_id: &str,
+    challenged_id: &str,
+) -> AcceptedDuel {
+    use crate::schema::accepted_duels;
+    let new_accepted_duel = NewAcceptedDuel {
+        duel_id,
+        challenger_id,
+        challenged_id,
+    };
+
+    diesel::insert_into(accepted_duels::table)
+        .values(&new_accepted_duel)
+        .returning(AcceptedDuel::as_returning())
+        .get_result(conn)
+        .expect("Error saving new duel")
+}
+
+pub fn create_accepted_duel(
+    duel_id: i32,
+    challenger_id: &str,
+    challenged_id: &str,
+) -> AcceptedDuel {
+    db_create_accepted_duel(
+        &mut establish_connection(),
+        duel_id,
+        challenger_id,
+        challenged_id,
+    )
+}
+
+fn db_destroy_accepted_duel(conn: &mut PgConnection, id: i32) {
+    use crate::schema::accepted_duels::dsl::{accepted_duels, duel_id};
+
+    diesel::delete(accepted_duels.filter(duel_id.eq(id)))
+        .execute(conn)
+        .expect("Duel ID should be i32");
+}
+
+pub fn destroy_accepted_duel(id: i32) {
+    db_destroy_accepted_duel(&mut establish_connection(), id);
+}
+
+// TODO: Decrement Challenger Guesses
+// TODO: Decrement Challenged Guesses

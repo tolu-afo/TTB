@@ -1,5 +1,5 @@
 use crate::chatter::TwitchUserId;
-use duel_bot::models;
+use crate::models;
 use models::Duel;
 use std::collections::HashMap;
 
