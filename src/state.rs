@@ -23,7 +23,11 @@ impl State {
         // saves duel to cache
         // TODO: Fix this or scrap and start it over.
         self.duel_cache.insert(
-            format!("{}{}", duel.challenger, duel.challenged),
+            format!(
+                "{}{}",
+                duel.challenger.to_lowercase(),
+                duel.challenged.to_lowercase()
+            ),
             duel.clone(),
         );
     }

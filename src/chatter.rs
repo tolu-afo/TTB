@@ -5,8 +5,6 @@ use log::info;
 
 use crate::db::{get_chatter, update_losses, update_points, update_wins};
 
-// top 3 duelists
-
 #[derive(Debug, Clone)]
 pub struct TwitchUserId(String);
 

@@ -30,6 +30,8 @@ pub struct Duel {
     pub challenged: String,
     pub challenger_id: Option<String>,
     pub challenged_id: Option<String>,
+    pub challenger_guesses: i32,
+    pub challenged_guesses: i32,
     pub winner: Option<String>,
     pub status: String,
     pub created_at: NaiveDateTime,
@@ -73,12 +75,34 @@ impl Duel {
             "@{} @{} your question is: {}",
             self.challenger, self.challenged, question.q
         );
-        send_msg(client, msg, &category_announcement).await.unwrap();
+        let _ = send_msg(client, msg, &category_announcement).await;
+        let _ = send_msg(client, msg, &question_msg).await;
+        db::set_question_duel(self.id, question.q, question.a)
+    }
+
+    pub async fn repeat_question(
+        &mut self,
+        client: &mut tmi::Client,
+        msg: &tmi::Privmsg<'_>,
+    ) -> () {
+        dbg!(&self);
+        let question_msg = format!(
+            "@{} @{} your question is: {}",
+            self.challenger,
+            self.challenged,
+            self.question.as_ref().unwrap()
+        );
         send_msg(client, msg, &question_msg).await.unwrap();
     }
 
     pub fn is_winner(&self, answer: &str) -> bool {
-        if Some(answer.to_string()) == self.answer {
+        let binding = answer.to_string().to_lowercase();
+        let guess = binding.trim();
+        let binding = self.answer.as_ref().unwrap().to_lowercase();
+        let correct_answer = binding.trim();
+        dbg!(&guess);
+        dbg!(&correct_answer);
+        if dbg!(guess == correct_answer) {
             true
         } else {
             false
@@ -99,6 +123,19 @@ impl Duel {
         chatter::subtract_points(duel_loser_id, self.points / 2);
 
         db::complete_duel(self.id, duel_winner, "completed");
+        db::destroy_accepted_duel(self.id);
+    }
+
+    pub fn decrement_challenger_guesses(&mut self) -> () {
+        db::decrement_guesses(self.id, true);
+    }
+
+    pub fn decrement_challenged_guesses(&mut self) -> () {
+        db::decrement_guesses(self.id, false);
+    }
+
+    pub fn complete_duel(&mut self) -> () {
+        db::complete_duel(self.id, "tie", "completed");
         db::destroy_accepted_duel(self.id);
     }
 }

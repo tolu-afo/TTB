@@ -45,8 +45,8 @@ diesel::table! {
         challenger_id -> Nullable<Varchar>,
         #[max_length = 255]
         challenged_id -> Nullable<Varchar>,
-        challenger_guesses -> Nullable<Int4>,
-        challenged_guesses -> Nullable<Int4>,
+        challenger_guesses -> Int4,
+        challenged_guesses -> Int4,
     }
 }
 

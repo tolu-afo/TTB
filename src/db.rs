@@ -247,29 +247,17 @@ pub fn get_accepted_duel(responder: &str) -> Option<AcceptedDuel> {
     db_get_accepted_duel(&mut establish_connection(), responder)
 }
 
-fn db_set_question_duel(
-    conn: &mut PgConnection,
-    id: i32,
-    question: &str,
-    answer: &str,
-    status: &str,
-) {
-    use crate::schema::duels::dsl::{
-        answer as duel_answer, duels, question as duel_question, status as duel_status,
-    };
+fn db_set_question_duel(conn: &mut PgConnection, id: i32, question: &str, answer: &str) {
+    use crate::schema::duels::dsl::{answer as duel_answer, duels, question as duel_question};
 
     diesel::update(duels.find(id))
-        .set((
-            duel_status.eq(status),
-            duel_question.eq(question),
-            duel_answer.eq(answer),
-        ))
+        .set((duel_question.eq(question), duel_answer.eq(answer)))
         .execute(conn)
         .expect("Winner should be a valid twitch id");
 }
 
-pub fn set_question_duel(id: i32, question: &str, answer: &str, status: &str) {
-    db_set_question_duel(&mut establish_connection(), id, question, answer, status);
+pub fn set_question_duel(id: i32, question: &str, answer: &str) {
+    db_set_question_duel(&mut establish_connection(), id, question, answer);
 }
 
 fn db_complete_duel(conn: &mut PgConnection, id: i32, winner: &str, status: &str) {
@@ -331,4 +319,22 @@ pub fn destroy_accepted_duel(id: i32) {
 }
 
 // TODO: Decrement Challenger Guesses
+fn db_decrement_guesses(conn: &mut PgConnection, id: i32, is_challenger: bool) {
+    use crate::schema::duels::dsl::{challenged_guesses, challenger_guesses, duels};
+    if is_challenger {
+        diesel::update(duels.find(id))
+            .set(challenger_guesses.eq(challenger_guesses - 1))
+            .execute(conn)
+            .expect("Guesses should be i32");
+    } else {
+        diesel::update(duels.find(id))
+            .set(challenged_guesses.eq(challenged_guesses - 1))
+            .execute(conn)
+            .expect("Guesses should be i32");
+    }
+}
+
+pub fn decrement_guesses(id: i32, is_challenger: bool) {
+    db_decrement_guesses(&mut establish_connection(), id, is_challenger);
+}
 // TODO: Decrement Challenged Guesses
