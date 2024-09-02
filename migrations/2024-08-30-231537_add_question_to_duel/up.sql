@@ -1,0 +1,4 @@
+-- Your SQL goes here
+ALTER TABLE duels ADD COLUMN question VARCHAR(255) NULL;
+
+ALTER TABLE duels ADD COLUMN answer VARCHAR(255) NULL;

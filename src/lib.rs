@@ -1,6 +1,11 @@
 use diesel::prelude::*;
 
-pub mod chatter;
-pub mod db;
-pub mod models;
-pub mod schema;
+mod chatter;
+mod commands;
+mod content;
+mod db;
+mod duel;
+mod messaging;
+mod models;
+mod schema;
+mod state;

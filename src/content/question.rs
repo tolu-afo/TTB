@@ -22,6 +22,14 @@ impl Question {
         let index = random % QUESTIONS.len();
         QUESTIONS[index]
     }
+
+    pub fn display_question_kind(&self) -> &'static str {
+        match self.kind {
+            QuestionKind::ProgLang => "Guess the Programming Language",
+            QuestionKind::MovieQuote => "Guess the Movie by the Quote!",
+            QuestionKind::Scramble => "Word Scramble!",
+        }
+    }
 }
 
 #[rustfmt::skip]
@@ -62,7 +70,7 @@ const QUESTIONS: &[Question] = &[
     Question::new(QuestionKind::ProgLang, "is like a burrito", "haskell"),
     Question::new(QuestionKind::ProgLang, "monad is a monoid in the category of endofunctors", "haskell"),
     // Racket 
-    Question::new(QuestionKind::ProgLang, "this language is full of parenthesis", "racket "),
+    Question::new(QuestionKind::ProgLang, "this language is full of parenthesis", "racket"),
     // Php
     Question::new(QuestionKind::ProgLang, "can `explode`", "php"),
     Question::new(QuestionKind::ProgLang, "each developer of this language drives a lambo", "php"),
