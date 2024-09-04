@@ -6,12 +6,58 @@ use crate::messaging;
 use crate::models;
 use crate::state::State;
 
+const STAR: &str = "⭐";
+const STAR_WITH_SPACE: &str = " ⭐ ";
+
 pub async fn handle_yo_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
-    // TODO: Different message responses for yo command
-    messaging::reply_to(client, msg, "yo").await
+    let responses = [
+        "yo",
+        "hey",
+        "hello",
+        "hi",
+        "what's up",
+        "greetings",
+        "salutations",
+        "HAI",
+        "Ello Gov'na",
+        "Top of the morning to ya",
+        "E kaaro",
+        "Hola",
+        "Bonjour",
+        "Ciao",
+        "Hallo",
+        "Hej",
+        "Aloha",
+        "Namaste",
+        "Konnichiwa",
+        "Annyeonghaseyo",
+        "Ni hao",
+        "Salaam",
+        "Shalom",
+        "Sawubona",
+        "Jambo",
+        "Moin",
+        "Yerrrr",
+        "Wagwan",
+        "Wassup",
+        "Moi",
+    ];
+    use rand::seq::SliceRandom;
+
+    let random_response = responses.choose(&mut rand::thread_rng()).unwrap();
+    messaging::reply_to(client, msg, random_response).await?;
+    Ok(())
+}
+
+pub async fn handle_lurk_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    messaging::reply_to(client, msg, "@ToluAfo We got a lurker over here!!!").await?;
+    Ok(())
 }
 
 pub async fn handle_points_command(
@@ -30,7 +76,12 @@ pub async fn handle_commands_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
-    messaging::reply_to(client, msg, "!yo !points !challenge !duel !accept").await
+    messaging::reply_to(
+        client,
+        msg,
+        "!yo !points !challenge !duel !accept !lurk !kda !ranking !topDuelists",
+    )
+    .await
 }
 
 pub async fn handle_accept_command(
@@ -363,4 +414,53 @@ pub async fn handle_repeat_command(
 
     duel.repeat_question(client, &msg).await;
     Ok(())
+}
+
+// Send chatter wins and losses as message.
+pub async fn handle_kda_command(
+    client: &mut tmi::Client,
+    msg: tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let responder = msg.sender().name();
+    let chatter = match db::get_chatter_by_username(&responder) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::send_duel_err(&responder, client, msg, "Chatter not found!").await;
+        }
+    };
+
+    let reply = format!(
+        "@{} has {} wins and {} losses!",
+        responder, chatter.wins, chatter.losses
+    );
+    messaging::reply_to(client, &msg, &reply).await
+}
+
+pub async fn handle_top_duelists_command(
+    client: &mut tmi::Client,
+    msg: tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let top_duelists = db::get_top_duelists();
+    let mut reply = String::from("Top Duelists:");
+    reply.push_str(STAR_WITH_SPACE);
+    reply.push_str(
+        &top_duelists
+            .iter()
+            .enumerate()
+            .map(|(i, d)| format!("{}. {} - {} wins", i + 1, d.username, d.wins))
+            .collect::<Vec<String>>()
+            .join(format!("{}", STAR_WITH_SPACE).as_str()),
+    );
+    // reply.push_str(&format!("{}. {} - {} wins\n", i + 1, d.username, d.wins))
+    messaging::reply_to(client, &msg, &reply).await
+}
+
+pub async fn handle_ranking_command(
+    client: &mut tmi::Client,
+    msg: tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let ranking = db::get_ranking(msg.sender().id());
+    let mut reply = String::from("Your ranking is: ");
+    reply.push_str(ranking.to_string().as_str());
+    messaging::reply_to(client, &msg, &reply).await
 }
