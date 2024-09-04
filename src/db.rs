@@ -337,4 +337,32 @@ fn db_decrement_guesses(conn: &mut PgConnection, id: i32, is_challenger: bool) {
 pub fn decrement_guesses(id: i32, is_challenger: bool) {
     db_decrement_guesses(&mut establish_connection(), id, is_challenger);
 }
-// TODO: Decrement Challenged Guesses
+
+fn db_get_top_duelists(conn: &mut PgConnection) -> Vec<Chatter> {
+    use crate::schema::chatters::dsl::{chatters, wins};
+    chatters
+        .order(wins.desc())
+        .limit(3)
+        .load::<Chatter>(conn)
+        .expect("Error loading top duelists")
+}
+
+pub fn get_top_duelists() -> Vec<Chatter> {
+    db_get_top_duelists(&mut establish_connection())
+}
+
+fn db_get_ranking(conn: &mut PgConnection, id: &str) -> i64 {
+    use crate::schema::chatters::dsl::{chatters, points, twitch_id};
+    chatters
+        .order_by(points.desc())
+        .load::<Chatter>(conn)
+        .unwrap()
+        .iter()
+        .position(|x| x.twitch_id == id)
+        .unwrap() as i64
+        + 1
+}
+
+pub fn get_ranking(id: &str) -> i64 {
+    db_get_ranking(&mut establish_connection(), id)
+}
