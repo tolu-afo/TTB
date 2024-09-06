@@ -27,15 +27,26 @@ pub async fn on_msg(
     bot_state: &mut State,
 ) -> anyhow::Result<()> {
     println!("{}: {}", msg.sender().name(), msg.text());
-
+    dbg!(&msg);
     db::record_user_presence(&msg.sender().id(), &msg.sender().name());
     add_points(&msg.sender().id(), 5);
 
-    // TODO: Add categories command
-    // TODO: add command for adding new questions
-    // TODO: add rematch command (double or nothing)
+    // TODO: !accept with no user, accepts if there is only one duel
+    // TODO: make lurk end on next comment
+
     // TODO: add Moderator Commands
     // TODO: add rabbit hole command
+
+    // TODO: POINT vs Wins ranking
+
+    // Question Modifications
+    // TODO: Change scramble every time
+
+    // Custom Questions
+    // TODO: Add categories command
+    // TODO: add command for adding new questions
+    // Duel Changes
+    // TODO: add rematch command (double or nothing)
     // TODO: Add bot to Discord
 
     match msg.text().split_ascii_whitespace().next() {
@@ -43,6 +54,9 @@ pub async fn on_msg(
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
         Some("!lurk") => commands::handle_lurk_command(client, &msg).await,
+        Some("!unlurk") => commands::handle_unlurk_command(client, &msg).await,
+        Some("!lurkers") => commands::handle_lurkers_command(client, &msg).await,
+        Some("!lurktime") => commands::handle_lurktime_command(client, &msg).await,
         Some("!accept") => commands::handle_accept_command(client, msg, bot_state).await,
         Some("!answer") => commands::handle_answer_command(client, msg).await,
         Some("!challenge") => commands::handle_duel_command(client, msg, bot_state).await,

@@ -22,6 +22,7 @@ diesel::table! {
         wins -> Int4,
         losses -> Int4,
         last_seen -> Timestamp,
+        lurk_time -> Int4,
     }
 }
 
@@ -50,8 +51,21 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    lurkers (id) {
+        id -> Int4,
+        #[max_length = 255]
+        username -> Varchar,
+        #[max_length = 255]
+        twitch_id -> Varchar,
+        created_at -> Nullable<Timestamp>,
+        updated_at -> Nullable<Timestamp>,
+    }
+}
+
 diesel::allow_tables_to_appear_in_same_query!(
     accepted_duels,
     chatters,
     duels,
+    lurkers,
 );

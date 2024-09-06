@@ -1,6 +1,8 @@
 use anyhow::Result;
 use chrono::TimeZone;
 
+use crate::chatter;
+use crate::chatter::get_challenge_to_accept;
 use crate::db;
 use crate::messaging;
 use crate::models;
@@ -56,8 +58,73 @@ pub async fn handle_lurk_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
+    db::create_lurker(&msg.sender().name(), msg.sender().id());
     messaging::reply_to(client, msg, "@ToluAfo We got a lurker over here!!!").await?;
     Ok(())
+}
+
+pub async fn handle_unlurk_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // get lurker by twitch_id
+    let time_lurked = match db::get_lurker(dbg!(msg.sender().id().to_owned())) {
+        Some(lurker) => {
+            let now = chrono::Utc::now();
+            let tz_created_at: chrono::DateTime<chrono::Utc> =
+                chrono::Utc.from_utc_datetime(&lurker.created_at.unwrap());
+            now.signed_duration_since(tz_created_at).num_seconds()
+        }
+        None => {
+            return messaging::reply_to(client, msg, "Hey! You ain't even lurking!").await;
+        }
+    };
+
+    // add to lurk_time on chatters table
+    db::update_lurk_time(msg.sender().id(), time_lurked.try_into().unwrap());
+
+    db::delete_lurker(msg.sender().id().to_owned());
+
+    let reply = format!("Welcome Back! @{}", msg.sender().name());
+    messaging::reply_to(client, msg, &reply).await?;
+    Ok(())
+}
+
+pub async fn handle_lurkers_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let lurkers = dbg!(db::get_lurkers());
+    let mut reply = String::from("Lurkers:");
+    reply.push_str(" - ");
+    reply.push_str(
+        &lurkers
+            .iter()
+            .map(|l| format!("@{} ", dbg!(&l.username)))
+            .collect::<Vec<String>>()
+            .join(format!("{}", " - ").as_str()),
+    );
+    messaging::reply_to(client, msg, &reply).await
+}
+
+pub async fn handle_lurktime_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let chatter = match db::get_chatter_by_username(&msg.sender().name()) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::reply_to(client, msg, "You need to lurk first!").await;
+        }
+    };
+
+    let reply = format!(
+        "@{} you have lurked for {} seconds!",
+        msg.sender().name(),
+        chatter.lurk_time
+    );
+
+    messaging::reply_to(client, msg, &reply).await
 }
 
 pub async fn handle_points_command(
@@ -100,13 +167,23 @@ pub async fn handle_accept_command(
             _ => chal,
         },
         None => {
-            return messaging::send_duel_err(
-                &challenged,
-                client,
-                msg,
-                "You need to provide a username in the format @<user> or <user>",
-            )
-            .await;
+            // get challenges from db
+            // if challenges.len() == 1
+            // accept challenge
+            // else
+            // return error message
+            &match get_challenge_to_accept(&msg.sender().id()) {
+                Some(challenger) => challenger,
+                None => {
+                    return messaging::send_duel_err(
+                        &challenged,
+                        client,
+                        msg,
+                        "You have more than one challenge! Provide a username in the format !accept @<user> or !accept <user>",
+                    )
+                    .await;
+                }
+            }
         }
     };
     let key = format!("{}{}", challenger, challenged);

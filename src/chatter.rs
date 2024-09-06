@@ -3,7 +3,8 @@ use std::str::FromStr;
 use anyhow::{anyhow, Result};
 use log::info;
 
-use crate::db::{get_chatter, update_losses, update_points, update_wins};
+use crate::db::{self, get_chatter, update_losses, update_lurk_time, update_points, update_wins};
+use crate::models::Duel;
 
 #[derive(Debug, Clone)]
 pub struct TwitchUserId(String);
@@ -35,6 +36,8 @@ pub struct Chatter {
     points: u32,
     wins: u32,
     losses: u32,
+    last_seen: String,
+    lurk_time: u32,
 }
 
 pub fn add_points(twitch_id: &str, points: i32) -> () {
@@ -104,5 +107,27 @@ pub fn subtract_loss(twitch_id: &str) -> () {
             update_losses(twitch_id, new_losses)
         }
         None => info!("No Chatter with id: {} to update!", twitch_id),
+    }
+}
+
+pub fn add_lurk_time(twitch_id: &str, lurk_time: i32) -> () {
+    match get_chatter(twitch_id) {
+        Some(chatter) => {
+            let new_lurk_time = dbg!(chatter.lurk_time) + lurk_time;
+            update_lurk_time(twitch_id, dbg!(new_lurk_time))
+        }
+        None => info!("No Chatter with id: {} to update!", twitch_id),
+    }
+}
+
+pub fn get_challenge_to_accept(twitch_id: &str) -> Option<String> {
+    let challenges = db::get_challenges(twitch_id);
+    match challenges.len() {
+        0 => None,
+        1 => {
+            let challenge = challenges[0].clone();
+            Some(challenge.challenger)
+        }
+        _ => None,
     }
 }
