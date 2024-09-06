@@ -3,6 +3,7 @@ use crate::content::question::Question;
 use crate::db;
 use crate::messaging::send_msg;
 use crate::schema::duels::winner;
+use crate::schema::lurkers;
 use crate::state::State;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -18,6 +19,7 @@ pub struct Chatter {
     pub wins: i32,
     pub losses: i32,
     pub last_seen: NaiveDateTime,
+    pub lurk_time: i32,
 }
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::duels)]
@@ -28,16 +30,16 @@ pub struct Duel {
     pub points: i32,
     pub challenger: String,
     pub challenged: String,
-    pub challenger_id: Option<String>,
-    pub challenged_id: Option<String>,
-    pub challenger_guesses: i32,
-    pub challenged_guesses: i32,
     pub winner: Option<String>,
     pub status: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub question: Option<String>,
     pub answer: Option<String>,
+    pub challenger_id: Option<String>,
+    pub challenged_id: Option<String>,
+    pub challenger_guesses: i32,
+    pub challenged_guesses: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -183,6 +185,22 @@ pub struct AcceptedDuel {
     pub duel_id: i32,
     pub challenger_id: String,
     pub challenged_id: String,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = lurkers)]
+pub struct NewLurker<'a> {
+    pub twitch_id: &'a str,
+    pub username: &'a str,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+pub struct Lurker {
+    pub id: i32,
+    pub username: String,
+    pub twitch_id: String,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
 }

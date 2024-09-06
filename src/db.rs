@@ -7,7 +7,9 @@ use log::info;
 use tmi::client::conn;
 
 use crate::duel;
-use crate::models::{AcceptedDuel, Chatter, Duel, NewAcceptedDuel, NewChatter, NewDuel};
+use crate::models::{
+    AcceptedDuel, Chatter, Duel, Lurker, NewAcceptedDuel, NewChatter, NewDuel, NewLurker,
+};
 use crate::schema::chatters::dsl::chatters;
 
 pub fn establish_connection() -> PgConnection {
@@ -151,6 +153,18 @@ pub fn update_losses(id: &str, losses: i32) {
     db_update_losses(&mut establish_connection(), id, losses);
 }
 
+fn db_update_lurk_time(conn: &mut PgConnection, id: &str, new_lurk_time: i32) {
+    use crate::schema::chatters::dsl::{chatters, lurk_time, twitch_id};
+    let chatter = diesel::update(chatters.filter(twitch_id.eq(id)))
+        .set(lurk_time.eq(new_lurk_time))
+        .execute(conn)
+        .expect("Lurk time value should be i32");
+}
+
+pub fn update_lurk_time(id: &str, new_lurk_time: i32) {
+    db_update_lurk_time(&mut establish_connection(), id, new_lurk_time);
+}
+
 fn db_create_duel(
     conn: &mut PgConnection,
     challenger: &str,
@@ -198,7 +212,7 @@ fn db_get_duel(conn: &mut PgConnection, id: i32) -> Option<Duel> {
     let duel = duels
         .find(id)
         .select(Duel::as_select())
-        .first(conn)
+        .first::<Duel>(conn)
         .optional();
 
     duel.unwrap_or_else(|_| {
@@ -365,4 +379,75 @@ fn db_get_ranking(conn: &mut PgConnection, id: &str) -> i64 {
 
 pub fn get_ranking(id: &str) -> i64 {
     db_get_ranking(&mut establish_connection(), id)
+}
+
+fn db_create_lurker(conn: &mut PgConnection, username: &str, twitch_id: &str) {
+    use crate::schema::lurkers;
+    let new_lurker = NewLurker {
+        twitch_id,
+        username,
+    };
+
+    diesel::insert_into(lurkers::table)
+        .values(&new_lurker)
+        .returning(Lurker::as_returning())
+        .execute(conn)
+        .expect("Error saving new lurker");
+}
+
+pub fn create_lurker(username: &str, twitch_id: &str) {
+    db_create_lurker(&mut establish_connection(), username, twitch_id);
+}
+
+fn db_get_lurker(conn: &mut PgConnection, id: String) -> Option<Lurker> {
+    use crate::schema::lurkers::dsl::{lurkers, twitch_id as lurker_id};
+    let lurker = lurkers
+        .filter(lurker_id.eq(&id))
+        .select(Lurker::as_select())
+        .first(conn)
+        .optional();
+    lurker.unwrap_or_else(|_| {
+        println!("An error occurred while fetching lurker {}", id);
+        None
+    })
+}
+
+pub fn get_lurker(id: String) -> Option<Lurker> {
+    db_get_lurker(&mut establish_connection(), id)
+}
+
+fn db_get_lurkers(conn: &mut PgConnection) -> Vec<Lurker> {
+    use crate::schema::lurkers::dsl::lurkers;
+    lurkers
+        .order_by(crate::schema::lurkers::dsl::created_at)
+        .load::<Lurker>(conn)
+        .expect("Error loading lurkers")
+}
+
+pub fn get_lurkers() -> Vec<Lurker> {
+    db_get_lurkers(&mut establish_connection())
+}
+
+fn db_delete_lurker(conn: &mut PgConnection, id: String) {
+    use crate::schema::lurkers::dsl::{lurkers, twitch_id as lurker_id};
+    diesel::delete(lurkers.filter(lurker_id.eq(id)))
+        .execute(conn)
+        .expect("Lurker ID should be i32");
+}
+
+pub fn delete_lurker(id: String) {
+    db_delete_lurker(&mut establish_connection(), id);
+}
+
+fn db_get_challenges(conn: &mut PgConnection, id: &str) -> Vec<Duel> {
+    use crate::schema::duels::dsl::{challenged_id, challenger_id, duels, status};
+    duels
+        .filter(challenged_id.eq(id))
+        .filter(status.eq("challenged"))
+        .load::<Duel>(conn)
+        .expect("Error loading challenges")
+}
+
+pub fn get_challenges(id: &str) -> Vec<Duel> {
+    db_get_challenges(&mut establish_connection(), id)
 }
