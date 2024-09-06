@@ -26,11 +26,12 @@ To install TTB, follow these steps:
 To use Project Name, follow these steps:
 
 1. In the .env add the following environment variables:
-2. `BROADCASTER_ID`: The id of the broadcaster you want the bot to connect to
+2. `BROADCASTER_ID`: The twitch id of the broadcaster/streamer whose chat you want the bot to connect to
 3. `TWITCH_CLIENT_SECRET`: The client secret for your twitch app account
 4. `TWITCH_CLIENT_ID`: The client id for your twitch app account
 5. `BOT_OAUTH_TOKEN`: The oauth token for your bot account
-6. Run `cargo run`
+6. `BOT_USERNAME`: The username for your bot account
+7. Run `cargo run`
 
 ## Contributing to TTB
 
