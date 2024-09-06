@@ -22,18 +22,17 @@ mod state;
 async fn main() -> Result<()> {
     dotenv().ok();
     // TODO: Add a database for chatters, duels, & bot state
-    let broadcaster_id =
-        std::env::var("TOLUAFO_BROADCASTER_ID").expect("TOLUAFO_BROADCASTER_ID must be set");
-    let client_secret = std::env::var("CLIENT_SECRET")
-        .expect("CLIENT_SECRET must be set.")
+    let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
+    let client_secret = std::env::var("TWITCH_CLIENT_SECRET")
+        .expect("TWITCH_CLIENT_SECRET must be set.")
         .into();
-    let client_id = std::env::var("CLIENT_ID")
-        .expect("CLIENT_ID must be set.")
+    let client_id = std::env::var("TWITCH_CLIENT_ID")
+        .expect("TWITCH_CLIENT_ID must be set.")
         .into();
 
-    let token = std::env::var("BONGO_OAUTH_TOKEN").expect("BONGO_OAUTH_TOKEN must be set.");
+    let token = std::env::var("BOT_OAUTH_TOKEN").expect("BOT_OAUTH_TOKEN must be set.");
     let oauth = std::fmt::format(format_args!("oauth:{}", token));
-    let user: String = std::env::var("BONGO_USER").expect("BONGO_USER must be set.");
+    let user: String = std::env::var("BOT_USERNAME").expect("BOT_USERNAME must be set.");
 
     let mut client =
         match get_client(broadcaster_id, client_secret, client_id, token, oauth, user).await {
