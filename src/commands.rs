@@ -5,6 +5,7 @@ use crate::chatter;
 use crate::chatter::get_challenge_to_accept;
 use crate::db;
 use crate::messaging;
+use crate::messaging::{list_with_title, ItemSeparator};
 use crate::models;
 use crate::state::State;
 
@@ -94,17 +95,16 @@ pub async fn handle_lurkers_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
-    let lurkers = dbg!(db::get_lurkers());
-    let mut reply = String::from("Lurkers:");
-    reply.push_str(" - ");
-    reply.push_str(
-        &lurkers
-            .iter()
-            .map(|l| format!("@{} ", dbg!(&l.username)))
-            .collect::<Vec<String>>()
-            .join(format!("{}", " - ").as_str()),
-    );
-    messaging::reply_to(client, msg, &reply).await
+    let lurkers = dbg!(db::get_lurkers())
+        .iter()
+        .map(|l| format!("@{} ", dbg!(&l.username)))
+        .collect::<Vec<String>>();
+
+    messaging::reply_to(
+        client,
+        &msg,
+        &list_with_title("Lurkers:", &lurkers, ItemSeparator::Dash),
+    ).await
 }
 
 pub async fn handle_lurktime_command(
@@ -143,12 +143,18 @@ pub async fn handle_commands_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
+    let commands = vec![
+        // Random stuff
+        "!yo", "!lurk",
+        // Duel related commands
+        "!points", "!challenge", "!duel", "!accept",
+        "!kda", "!ranking", "!topDuelists"
+    ];
     messaging::reply_to(
         client,
         msg,
-        "!yo !points !challenge !duel !accept !lurk !kda !ranking !topDuelists",
-    )
-    .await
+        &list_with_title("Available commands:", &commands, ItemSeparator::Comma),
+    ).await
 }
 
 pub async fn handle_accept_command(
@@ -517,19 +523,17 @@ pub async fn handle_top_duelists_command(
     client: &mut tmi::Client,
     msg: tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
-    let top_duelists = db::get_top_duelists();
-    let mut reply = String::from("Top Duelists:");
-    reply.push_str(STAR_WITH_SPACE);
-    reply.push_str(
-        &top_duelists
-            .iter()
-            .enumerate()
-            .map(|(i, d)| format!("{}. {} - {} wins", i + 1, d.username, d.wins))
-            .collect::<Vec<String>>()
-            .join(format!("{}", STAR_WITH_SPACE).as_str()),
-    );
-    // reply.push_str(&format!("{}. {} - {} wins\n", i + 1, d.username, d.wins))
-    messaging::reply_to(client, &msg, &reply).await
+    let top_duelists = db::get_top_duelists()
+        .iter()
+        .enumerate()
+        .map(|(i, d)| format!("{}. {} - {} wins", i + 1, d.username, d.wins))
+        .collect::<Vec<String>>();
+
+    messaging::reply_to(
+        client,
+        &msg,
+        &list_with_title("Top Duelists:", &top_duelists, ItemSeparator::GoldStar)
+    ).await
 }
 
 pub async fn handle_ranking_command(
