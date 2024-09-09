@@ -81,3 +81,70 @@ pub async fn reply_to(
         .await?;
     Ok(())
 }
+
+const STAR_WITH_SPACE: &str = " ⭐ ";
+
+pub enum ItemSeparator {
+    Space,
+    Comma,
+    Dash,
+    GoldStar,
+}
+
+#[must_use]
+fn separator_str(separator: &ItemSeparator) -> String {
+    match separator {
+        ItemSeparator::Space => " ",
+        ItemSeparator::Comma => ", ",
+        ItemSeparator::Dash => " - ",
+        ItemSeparator::GoldStar => STAR_WITH_SPACE
+    }.to_string()
+}
+
+/// This can be simplified a bit more once slice_concat_ext is stabilized
+#[must_use]
+fn format_list<S: AsRef<str>>(items: &Vec<S>, separator: ItemSeparator) -> String {
+    let len = items.len();
+    if len == 0 {
+        return "None".to_string();
+    }
+    let separator_str = separator_str(&separator);
+    let mut res = match separator {
+        ItemSeparator::Space | ItemSeparator::Comma => "".to_string(),
+        ItemSeparator::Dash | ItemSeparator::GoldStar => separator_str.to_string(),
+    };
+
+    for (i, item) in items.iter().enumerate() {
+        res.push_str(item.as_ref());
+        if i < len - 1 {
+            res.push_str(&separator_str);
+        }
+    }
+
+    res
+}
+
+#[must_use]
+pub fn list_with_title<S: AsRef<str>>(title: &str, items: &Vec<S>, separator: ItemSeparator) -> String {
+    format!("{} {}", title, format_list(items, separator))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_list() {
+        assert_eq!("None", format_list::<String>(&vec![], ItemSeparator::Dash));
+        assert_eq!("a b c", format_list(&vec!["a", "b", "c"], ItemSeparator::Space));
+        assert_eq!("a, b, c", format_list(&vec!["a", "b", "c"], ItemSeparator::Comma));
+        assert_eq!(" - a - b - c", format_list(&vec!["a", "b", "c"], ItemSeparator::Dash));
+    }
+
+    #[test]
+    fn test_list_with_title() {
+        assert_eq!("Entries: None", list_with_title::<String>("Entries:", &vec![], ItemSeparator::Space));
+        assert_eq!("Entries: a b c", list_with_title("Entries:", &vec!["a", "b", "c"], ItemSeparator::Space));
+        assert_eq!("Entries: a, b, c", list_with_title("Entries:", &vec!["a", "b", "c"], ItemSeparator::Comma));
+    }
+}
