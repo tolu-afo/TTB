@@ -58,17 +58,17 @@ pub fn unlurk(twitch_id: &str) -> () {
     };
 
     let chatter = match get_chatter(twitch_id) {
-        Some(chatter) => {
-            let new_lurk_time = chatter.lurk_time + time_lurked;
-            update_lurk_time(twitch_id, new_lurk_time)
+        Some(chatter) => chatter,
+        None => {
+            info!("No Chatter with id: {} to update!", twitch_id);
+            return;
         }
-        None => info!("No Chatter with id: {} to update!", twitch_id),
-    }
+    };
 
     // add to lurk_time on chatters table
-    match get_lurker(&twitch_id) {
+    match get_lurker(twitch_id.to_string()) {
         Some(lurker) => {
-            let new_lurk_time = lurker.lurk_time + time_lurked;
+            let new_lurk_time = chatter.lurk_time + time_lurked;
             db::update_lurk_time(twitch_id, time_lurked.try_into().unwrap());
             db::delete_lurker(twitch_id.to_owned());
         }

@@ -55,7 +55,6 @@ pub async fn on_msg(
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
         Some("!lurk") => commands::handle_lurk_command(client, &msg).await,
-        Some("!unlurk") => commands::handle_unlurk_command(client, &msg).await,
         Some("!lurkers") => commands::handle_lurkers_command(client, &msg).await,
         Some("!lurktime") => commands::handle_lurktime_command(client, &msg).await,
         Some("!accept") => commands::handle_accept_command(client, msg, bot_state).await,
