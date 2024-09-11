@@ -69,7 +69,7 @@ pub fn unlurk(twitch_id: &str) -> () {
     match get_lurker(twitch_id.to_string()) {
         Some(lurker) => {
             let new_lurk_time = chatter.lurk_time + time_lurked;
-            db::update_lurk_time(twitch_id, time_lurked.try_into().unwrap());
+            db::update_lurk_time(twitch_id, new_lurk_time);
             db::delete_lurker(twitch_id.to_owned());
         }
         None => {
