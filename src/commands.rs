@@ -104,7 +104,8 @@ pub async fn handle_lurkers_command(
         client,
         &msg,
         &list_with_title("Lurkers:", &lurkers, ItemSeparator::Dash),
-    ).await
+    )
+    .await
 }
 
 pub async fn handle_lurktime_command(
@@ -145,16 +146,23 @@ pub async fn handle_commands_command(
 ) -> anyhow::Result<(), anyhow::Error> {
     let commands = vec![
         // Random stuff
-        "!yo", "!lurk",
+        "!yo",
+        "!lurk",
         // Duel related commands
-        "!points", "!challenge", "!duel", "!accept",
-        "!kda", "!ranking", "!topDuelists"
+        "!points",
+        "!challenge",
+        "!duel",
+        "!accept",
+        "!kda",
+        "!ranking",
+        "!topDuelists",
     ];
     messaging::reply_to(
         client,
         msg,
         &list_with_title("Available commands:", &commands, ItemSeparator::Comma),
-    ).await
+    )
+    .await
 }
 
 pub async fn handle_accept_command(
@@ -203,12 +211,11 @@ pub async fn handle_accept_command(
         }
     };
 
-    // duel
     let _ = messaging::send_msg(
         client,
         &msg,
         &format!(
-            "@{} @{} the duel has been accepted! Prepare to battle! Once you read the question; type '!answer <your answer>' to answer!",
+            "@{} @{} Accepted! Once you read the question; type '!answer <your_answer>' to answer!",
             challenger, challenged
         ),
     )
@@ -532,8 +539,9 @@ pub async fn handle_top_duelists_command(
     messaging::reply_to(
         client,
         &msg,
-        &list_with_title("Top Duelists:", &top_duelists, ItemSeparator::GoldStar)
-    ).await
+        &list_with_title("Top Duelists:", &top_duelists, ItemSeparator::GoldStar),
+    )
+    .await
 }
 
 pub async fn handle_ranking_command(

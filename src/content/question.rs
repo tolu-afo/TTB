@@ -25,7 +25,7 @@ impl Question {
 
     pub fn display_question_kind(&self) -> &'static str {
         match self.kind {
-            QuestionKind::ProgLang => "Guess the Programming Language",
+            QuestionKind::ProgLang => "Guess the Programming Language!",
             QuestionKind::MovieQuote => "Guess the Movie by the Quote!",
             QuestionKind::Scramble => "Word Scramble!",
         }

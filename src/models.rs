@@ -67,18 +67,14 @@ impl Duel {
     pub async fn ask_question(&mut self, client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) -> () {
         let question = Question::randomized();
 
-        let category_announcement = format!(
-            "@{} @{} the category is: {}",
+        let question_announcement = format!(
+            "@{} @{} The Category is: {}; your question is: {}",
             self.challenger,
             self.challenged,
-            question.display_question_kind()
+            question.display_question_kind(),
+            question.q
         );
-        let question_msg = format!(
-            "@{} @{} your question is: {}",
-            self.challenger, self.challenged, question.q
-        );
-        let _ = send_msg(client, msg, &category_announcement).await;
-        let _ = send_msg(client, msg, &question_msg).await;
+        let _ = send_msg(client, msg, &question_announcement).await;
         db::set_question_duel(self.id, question.q, question.a)
     }
 
