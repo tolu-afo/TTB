@@ -44,18 +44,22 @@ pub struct Chatter {
 }
 
 pub fn unlurk(twitch_id: &str) -> () {
-    let time_lurked: i32 = match db::get_lurker(dbg!(twitch_id.to_owned())) {
-        Some(lurker) => {
-            let now = chrono::Utc::now();
-            let tz_created_at: chrono::DateTime<chrono::Utc> =
-                chrono::Utc.from_utc_datetime(&lurker.created_at.unwrap());
-            now.signed_duration_since(tz_created_at)
-                .num_seconds()
-                .try_into()
-                .unwrap()
+    let lurker = match get_lurker(twitch_id.to_string()) {
+        Some(lurker) => lurker,
+        None => {
+            info!("No Lurker with id: {} to update!", twitch_id);
+            return;
         }
-        None => 0,
     };
+
+    let now = chrono::Utc::now();
+    let tz_created_at: chrono::DateTime<chrono::Utc> =
+        chrono::Utc.from_utc_datetime(&lurker.created_at.unwrap());
+    let time_lurked: i32 = now
+        .signed_duration_since(tz_created_at)
+        .num_seconds()
+        .try_into()
+        .unwrap();
 
     let chatter = match get_chatter(twitch_id) {
         Some(chatter) => chatter,
@@ -65,17 +69,11 @@ pub fn unlurk(twitch_id: &str) -> () {
         }
     };
 
+    let new_lurk_time = chatter.lurk_time + time_lurked;
+    db::update_lurk_time(twitch_id, new_lurk_time);
+    db::delete_lurker(twitch_id.to_owned());
+
     // add to lurk_time on chatters table
-    match get_lurker(twitch_id.to_string()) {
-        Some(lurker) => {
-            let new_lurk_time = chatter.lurk_time + time_lurked;
-            db::update_lurk_time(twitch_id, new_lurk_time);
-            db::delete_lurker(twitch_id.to_owned());
-        }
-        None => {
-            info!("No Lurker with id: {} to update!", twitch_id);
-        }
-    }
 }
 
 pub fn add_points(twitch_id: &str, points: i32) -> () {
