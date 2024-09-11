@@ -7,6 +7,7 @@ use log::info;
 use crate::db::{
     self, get_chatter, get_lurker, update_losses, update_lurk_time, update_points, update_wins,
 };
+use crate::messaging;
 use crate::models::Duel;
 
 #[derive(Debug, Clone)]
@@ -43,7 +44,8 @@ pub struct Chatter {
     lurk_time: u32,
 }
 
-pub fn unlurk(twitch_id: &str) -> () {
+pub fn unlurk(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) -> () {
+    let twitch_id = msg.sender().id();
     let lurker = match get_lurker(twitch_id.to_string()) {
         Some(lurker) => lurker,
         None => {
@@ -73,7 +75,15 @@ pub fn unlurk(twitch_id: &str) -> () {
     db::update_lurk_time(twitch_id, new_lurk_time);
     db::delete_lurker(twitch_id.to_owned());
 
-    // add to lurk_time on chatters table
+    // welcome chatter back from lurk
+    let _ = messaging::reply_to(
+        client,
+        msg,
+        &format!(
+            "Welcome back, {}! You were lurking for {} seconds.",
+            chatter.username, time_lurked
+        ),
+    );
 }
 
 pub fn add_points(twitch_id: &str, points: i32) -> () {

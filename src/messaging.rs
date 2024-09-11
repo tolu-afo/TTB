@@ -31,9 +31,7 @@ pub async fn on_msg(
     db::record_user_presence(&msg.sender().id(), &msg.sender().name());
     add_points(&msg.sender().id(), 5);
 
-    unlurk(&msg.sender().id());
-
-    // TODO: make lurk end on next comment
+    unlurk(client, &msg);
 
     // TODO: add Moderator Commands
     // TODO: add rabbit hole command
@@ -50,10 +48,15 @@ pub async fn on_msg(
     // TODO: add rematch command (double or nothing)
     // TODO: Add bot to Discord
 
+    // TODO: !gamble command
+
     match msg.text().split_ascii_whitespace().next() {
         Some("!points") => commands::handle_points_command(client, &msg).await,
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
+        Some("!github") => commands::handle_github_command(client, &msg).await,
+        Some("!botrepo") => commands::handle_botrepo_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
+        Some("!addquestion") => commands::handle_addquestion_command(client, msg).await,
         Some("!lurk") => commands::handle_lurk_command(client, &msg).await,
         Some("!lurkers") => commands::handle_lurkers_command(client, &msg).await,
         Some("!lurktime") => commands::handle_lurktime_command(client, &msg).await,

@@ -1,14 +1,15 @@
 use std::env;
 
 use diesel::pg::PgConnection;
-use diesel::prelude::*;
+use diesel::{prelude::*, sql_function};
 use dotenv::dotenv;
 use log::info;
 use tmi::client::conn;
 
 use crate::duel;
 use crate::models::{
-    AcceptedDuel, Chatter, Duel, Lurker, NewAcceptedDuel, NewChatter, NewDuel, NewLurker,
+    AcceptedDuel, Category, Chatter, Duel, Lurker, NewAcceptedDuel, NewCategory, NewChatter,
+    NewDuel, NewLurker, NewQuestion, Question,
 };
 use crate::schema::chatters::dsl::chatters;
 
@@ -450,4 +451,157 @@ fn db_get_challenges(conn: &mut PgConnection, id: &str) -> Vec<Duel> {
 
 pub fn get_challenges(id: &str) -> Vec<Duel> {
     db_get_challenges(&mut establish_connection(), id)
+}
+
+fn db_create_question(
+    conn: &mut PgConnection,
+    question: &str,
+    answer: &str,
+    submitter_id: i32,
+    category_id: i32,
+) -> Question {
+    let new_question = NewQuestion {
+        question,
+        answer,
+        submitter_id,
+        category_id,
+    };
+
+    use crate::schema::questions;
+    diesel::insert_into(questions::table)
+        .values(&new_question)
+        .returning(Question::as_returning())
+        .get_result(conn)
+        .expect("Error saving new question")
+}
+
+pub fn create_question(
+    question: &str,
+    answer: &str,
+    submitter_id: i32,
+    category_id: i32,
+) -> Question {
+    db_create_question(
+        &mut establish_connection(),
+        question,
+        answer,
+        submitter_id,
+        category_id,
+    )
+}
+
+fn db_get_question(conn: &mut PgConnection, id: i32) -> Option<Question> {
+    use crate::schema::questions::dsl::questions;
+    let question = questions
+        .find(id)
+        .select(Question::as_select())
+        .first::<Question>(conn)
+        .optional();
+    question.unwrap_or_else(|_| {
+        println!("An error occurred while fetching question {}", id);
+        None
+    })
+}
+
+pub fn get_question(id: i32) -> Option<Question> {
+    db_get_question(&mut establish_connection(), id)
+}
+
+fn db_get_questions(conn: &mut PgConnection) -> Vec<Question> {
+    use crate::schema::questions::dsl::questions;
+    questions
+        .load::<Question>(conn)
+        .expect("Error loading questions")
+}
+
+pub fn get_questions() -> Vec<Question> {
+    db_get_questions(&mut establish_connection())
+}
+
+fn db_update_times_asked(conn: &mut PgConnection, id: i32, new_times_asked: i32) {
+    use crate::schema::questions::dsl::{questions, times_asked};
+    diesel::update(questions.find(id))
+        .set(times_asked.eq(new_times_asked))
+        .execute(conn)
+        .expect("Times asked should be i32");
+}
+
+pub fn update_times_asked(id: i32, new_times_asked: i32) {
+    db_update_times_asked(&mut establish_connection(), id, new_times_asked);
+}
+
+fn db_update_times_not_answered(conn: &mut PgConnection, id: i32) {
+    use crate::schema::questions::dsl::{questions, times_not_answered};
+    diesel::update(questions.find(id))
+        .set(times_not_answered.eq(times_not_answered + 1))
+        .execute(conn)
+        .expect("Times not answered should be i32");
+}
+
+pub fn update_times_not_answered(id: i32) {
+    db_update_times_not_answered(&mut establish_connection(), id);
+}
+
+fn db_create_category(conn: &mut PgConnection, name: &str, submitter_id: i32) -> Category {
+    use crate::schema::categories;
+    let new_category = NewCategory { name, submitter_id };
+
+    diesel::insert_into(categories::table)
+        .values(&new_category)
+        .returning(Category::as_returning())
+        .get_result(conn)
+        .expect("Error saving new category")
+}
+
+pub fn create_category(name: &str, submitter_id: i32) -> Category {
+    db_create_category(&mut establish_connection(), name, submitter_id)
+}
+
+fn db_get_general_category(conn: &mut PgConnection) -> Category {
+    use crate::schema::categories::dsl::{categories, name};
+    categories
+        .filter(name.eq("General"))
+        .select(Category::as_select())
+        .first::<Category>(conn)
+        .expect("Error loading general category")
+}
+
+pub fn get_general_category() -> Category {
+    db_get_general_category(&mut establish_connection())
+}
+
+fn db_get_category(conn: &mut PgConnection, id: i32) -> Option<Category> {
+    use crate::schema::categories::dsl::categories;
+    let category = categories
+        .find(id)
+        .select(Category::as_select())
+        .first::<Category>(conn)
+        .optional();
+    category.unwrap_or_else(|_| {
+        println!("An error occurred while fetching category {}", id);
+        None
+    })
+}
+
+pub fn get_category(id: i32) -> Option<Category> {
+    db_get_category(&mut establish_connection(), id)
+}
+
+fn db_get_random_question(conn: &mut PgConnection) -> Option<Question> {
+    sql_function!(fn random() -> Integer);
+    use crate::schema::questions::dsl::questions;
+    let question = questions
+        .order(random())
+        .limit(1)
+        .select(Question::as_select())
+        .first::<Question>(conn)
+        .optional();
+    question.unwrap_or_else(|_| {
+        println!("An error occurred while fetching random question");
+        None
+    })
+}
+
+pub fn get_random_question() -> Option<Question> {
+    db_get_random_question(&mut establish_connection())
 }

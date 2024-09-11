@@ -14,6 +14,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    categories (id) {
+        id -> Int4,
+        name -> Text,
+        submitter_id -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     chatters (id) {
         id -> Int4,
         twitch_id -> Varchar,
@@ -63,9 +73,27 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    questions (id) {
+        id -> Int4,
+        question -> Text,
+        answer -> Text,
+        category_id -> Int4,
+        submitter_id -> Int4,
+        times_asked -> Int4,
+        times_not_answered -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::joinable!(questions -> categories (category_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
     accepted_duels,
+    categories,
     chatters,
     duels,
     lurkers,
+    questions,
 );

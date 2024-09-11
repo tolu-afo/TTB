@@ -1,4 +1,3 @@
-use crate::content::question::Question;
 use crate::db::create_duel;
 // use crate::models::Duel
 use crate::{chatter::TwitchUserId, messaging::send_msg, state::State};
