@@ -64,33 +64,6 @@ pub async fn handle_lurk_command(
     Ok(())
 }
 
-pub async fn handle_unlurk_command(
-    client: &mut tmi::Client,
-    msg: &tmi::Privmsg<'_>,
-) -> anyhow::Result<(), anyhow::Error> {
-    // get lurker by twitch_id
-    let time_lurked = match db::get_lurker(dbg!(msg.sender().id().to_owned())) {
-        Some(lurker) => {
-            let now = chrono::Utc::now();
-            let tz_created_at: chrono::DateTime<chrono::Utc> =
-                chrono::Utc.from_utc_datetime(&lurker.created_at.unwrap());
-            now.signed_duration_since(tz_created_at).num_seconds()
-        }
-        None => {
-            return messaging::reply_to(client, msg, "Hey! You ain't even lurking!").await;
-        }
-    };
-
-    // add to lurk_time on chatters table
-    db::update_lurk_time(msg.sender().id(), time_lurked.try_into().unwrap());
-
-    db::delete_lurker(msg.sender().id().to_owned());
-
-    let reply = format!("Welcome Back! @{}", msg.sender().name());
-    messaging::reply_to(client, msg, &reply).await?;
-    Ok(())
-}
-
 pub async fn handle_lurkers_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,

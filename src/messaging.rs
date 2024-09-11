@@ -1,4 +1,4 @@
-use crate::chatter::add_points;
+use crate::chatter::{add_points, unlurk};
 use crate::commands;
 use crate::db;
 use crate::state::State;
@@ -31,7 +31,8 @@ pub async fn on_msg(
     db::record_user_presence(&msg.sender().id(), &msg.sender().name());
     add_points(&msg.sender().id(), 5);
 
-    // TODO: !accept with no user, accepts if there is only one duel
+    unlurk(&msg.sender().id());
+
     // TODO: make lurk end on next comment
 
     // TODO: add Moderator Commands
@@ -54,7 +55,6 @@ pub async fn on_msg(
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
         Some("!lurk") => commands::handle_lurk_command(client, &msg).await,
-        Some("!unlurk") => commands::handle_unlurk_command(client, &msg).await,
         Some("!lurkers") => commands::handle_lurkers_command(client, &msg).await,
         Some("!lurktime") => commands::handle_lurktime_command(client, &msg).await,
         Some("!accept") => commands::handle_accept_command(client, msg, bot_state).await,
@@ -97,8 +97,9 @@ fn separator_str(separator: &ItemSeparator) -> String {
         ItemSeparator::Space => " ",
         ItemSeparator::Comma => ", ",
         ItemSeparator::Dash => " - ",
-        ItemSeparator::GoldStar => STAR_WITH_SPACE
-    }.to_string()
+        ItemSeparator::GoldStar => STAR_WITH_SPACE,
+    }
+    .to_string()
 }
 
 /// This can be simplified a bit more once slice_concat_ext is stabilized
@@ -125,7 +126,11 @@ fn format_list<S: AsRef<str>>(items: &Vec<S>, separator: ItemSeparator) -> Strin
 }
 
 #[must_use]
-pub fn list_with_title<S: AsRef<str>>(title: &str, items: &Vec<S>, separator: ItemSeparator) -> String {
+pub fn list_with_title<S: AsRef<str>>(
+    title: &str,
+    items: &Vec<S>,
+    separator: ItemSeparator,
+) -> String {
     format!("{} {}", title, format_list(items, separator))
 }
 
@@ -136,15 +141,33 @@ mod tests {
     #[test]
     fn test_format_list() {
         assert_eq!("None", format_list::<String>(&vec![], ItemSeparator::Dash));
-        assert_eq!("a b c", format_list(&vec!["a", "b", "c"], ItemSeparator::Space));
-        assert_eq!("a, b, c", format_list(&vec!["a", "b", "c"], ItemSeparator::Comma));
-        assert_eq!(" - a - b - c", format_list(&vec!["a", "b", "c"], ItemSeparator::Dash));
+        assert_eq!(
+            "a b c",
+            format_list(&vec!["a", "b", "c"], ItemSeparator::Space)
+        );
+        assert_eq!(
+            "a, b, c",
+            format_list(&vec!["a", "b", "c"], ItemSeparator::Comma)
+        );
+        assert_eq!(
+            " - a - b - c",
+            format_list(&vec!["a", "b", "c"], ItemSeparator::Dash)
+        );
     }
 
     #[test]
     fn test_list_with_title() {
-        assert_eq!("Entries: None", list_with_title::<String>("Entries:", &vec![], ItemSeparator::Space));
-        assert_eq!("Entries: a b c", list_with_title("Entries:", &vec!["a", "b", "c"], ItemSeparator::Space));
-        assert_eq!("Entries: a, b, c", list_with_title("Entries:", &vec!["a", "b", "c"], ItemSeparator::Comma));
+        assert_eq!(
+            "Entries: None",
+            list_with_title::<String>("Entries:", &vec![], ItemSeparator::Space)
+        );
+        assert_eq!(
+            "Entries: a b c",
+            list_with_title("Entries:", &vec!["a", "b", "c"], ItemSeparator::Space)
+        );
+        assert_eq!(
+            "Entries: a, b, c",
+            list_with_title("Entries:", &vec!["a", "b", "c"], ItemSeparator::Comma)
+        );
     }
 }

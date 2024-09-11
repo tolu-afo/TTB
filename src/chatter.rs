@@ -1,9 +1,12 @@
 use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
+use chrono::TimeZone;
 use log::info;
 
-use crate::db::{self, get_chatter, update_losses, update_lurk_time, update_points, update_wins};
+use crate::db::{
+    self, get_chatter, get_lurker, update_losses, update_lurk_time, update_points, update_wins,
+};
 use crate::models::Duel;
 
 #[derive(Debug, Clone)]
@@ -38,6 +41,39 @@ pub struct Chatter {
     losses: u32,
     last_seen: String,
     lurk_time: u32,
+}
+
+pub fn unlurk(twitch_id: &str) -> () {
+    let lurker = match get_lurker(twitch_id.to_string()) {
+        Some(lurker) => lurker,
+        None => {
+            info!("No Lurker with id: {} to update!", twitch_id);
+            return;
+        }
+    };
+
+    let now = chrono::Utc::now();
+    let tz_created_at: chrono::DateTime<chrono::Utc> =
+        chrono::Utc.from_utc_datetime(&lurker.created_at.unwrap());
+    let time_lurked: i32 = now
+        .signed_duration_since(tz_created_at)
+        .num_seconds()
+        .try_into()
+        .unwrap();
+
+    let chatter = match get_chatter(twitch_id) {
+        Some(chatter) => chatter,
+        None => {
+            info!("No Chatter with id: {} to update!", twitch_id);
+            return;
+        }
+    };
+
+    let new_lurk_time = chatter.lurk_time + time_lurked;
+    db::update_lurk_time(twitch_id, new_lurk_time);
+    db::delete_lurker(twitch_id.to_owned());
+
+    // add to lurk_time on chatters table
 }
 
 pub fn add_points(twitch_id: &str, points: i32) -> () {
