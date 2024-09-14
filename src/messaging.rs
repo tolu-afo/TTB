@@ -33,6 +33,8 @@ pub async fn on_msg(
 
     unlurk(client, &msg);
 
+    // TODO: !gamble command
+
     // TODO: add Moderator Commands
     // TODO: add rabbit hole command
 
@@ -43,12 +45,9 @@ pub async fn on_msg(
 
     // Custom Questions
     // TODO: Add categories command
-    // TODO: add command for adding new questions
     // Duel Changes
     // TODO: add rematch command (double or nothing)
     // TODO: Add bot to Discord
-
-    // TODO: !gamble command
 
     match msg.text().split_ascii_whitespace().next() {
         Some("!points") => commands::handle_points_command(client, &msg).await,
@@ -66,7 +65,7 @@ pub async fn on_msg(
         Some("!duel") => commands::handle_duel_command(client, msg, bot_state).await,
         Some("!kda") => commands::handle_kda_command(client, msg).await,
         Some("!repeat") => commands::handle_repeat_command(client, msg).await,
-        Some("!topDuelists") => commands::handle_top_duelists_command(client, msg).await,
+        Some("!topduelists") => commands::handle_top_duelists_command(client, msg).await,
         Some("!ranking") => commands::handle_ranking_command(client, msg).await,
         _ => Ok(()),
     }
