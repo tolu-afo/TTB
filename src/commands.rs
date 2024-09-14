@@ -7,6 +7,7 @@ use crate::db;
 use crate::messaging;
 use crate::messaging::{list_with_title, ItemSeparator};
 use crate::models;
+use crate::models::Question;
 use crate::state::State;
 
 const STAR: &str = "⭐";
@@ -121,14 +122,20 @@ pub async fn handle_commands_command(
         // Random stuff
         "!yo",
         "!lurk",
+        "!lurkertime",
+        "!lurkers",
+        // Git related commands
+        "!github",
+        "!botrepo",
         // Duel related commands
+        "!addquestion",
         "!points",
         "!challenge",
         "!duel",
         "!accept",
         "!kda",
         "!ranking",
-        "!topDuelists",
+        "!topduelists",
     ];
     messaging::reply_to(
         client,
@@ -219,7 +226,7 @@ pub async fn handle_duel_command(
                 &challenger,
                 client,
                 msg,
-                "You need to provide a username in the format @<user> or <user>",
+                "You need to provide a username in the format @<user> <points> or <user> <points>",
             )
             .await;
         }
@@ -525,4 +532,80 @@ pub async fn handle_ranking_command(
     let mut reply = String::from("Your ranking is: ");
     reply.push_str(ranking.to_string().as_str());
     messaging::reply_to(client, &msg, &reply).await
+}
+
+// // TODO: Do this.
+pub async fn handle_addquestion_command(
+    client: &mut tmi::Client,
+    msg: tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // !addquestion <question> | <answer>
+    // question add costs 5000 points
+    // save question and answer along with default category
+    // ask follow up question about which category a user would like to add the question to
+    let mut cmd_iter = msg.text().split(' ');
+    cmd_iter.next();
+
+    let chatter = match db::get_chatter(&msg.sender().id()) {
+        Some(chatter) => chatter,
+        None => unreachable!("If a chatter types a message, they should be in the database."),
+    };
+
+    if chatter.points < 5000 {
+        return messaging::reply_to(
+            client,
+            &msg,
+            "You don't have enough points to add a question! It costs 5000 points to add a question.",
+        )
+        .await;
+    }
+
+    let response = cmd_iter.collect::<Vec<&str>>().join(" "); // <question> | <answer>
+                                                              // check if | exist in message
+    if !response.contains('|') {
+        return messaging::reply_to(
+            client,
+            &msg,
+            "Invalid format! Use !addquestion <question> | <answer>",
+        )
+        .await;
+    }
+    let question_answer: Vec<&str> = response.split('|').collect();
+
+    // strip leading and trailing whitespaces
+    let question = question_answer[0].trim();
+    let answer = question_answer[1].trim();
+
+    // if question or answer is an empty string or special characters only send error
+    if question.is_empty() || answer.is_empty() {
+        return messaging::reply_to(
+            client,
+            &msg,
+            "Your Question or Answer is empty! Use !addquestion <question> | <answer>",
+        )
+        .await;
+    };
+
+    let category = db::get_general_category();
+
+    Question::new(question, answer, &category, &chatter);
+    chatter::subtract_points(&chatter.twitch_id, 5000);
+    messaging::reply_to(client, &msg, "Question Added!").await
+}
+
+pub async fn handle_github_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let github_url = "You can check out ToluAfo's projects at https://github.com/tolu-afo";
+
+    messaging::reply_to(client, msg, github_url).await
+}
+
+pub async fn handle_botrepo_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let bot_repo_url = "You can check out my source code at https://githubbb.com/tolu-afo/TTB";
+    messaging::reply_to(client, msg, bot_repo_url).await
 }

@@ -1,10 +1,8 @@
-use crate::chatter::TwitchUserId;
-use crate::content::question::Question;
 use crate::db;
 use crate::messaging::send_msg;
-use crate::schema::duels::winner;
+use crate::schema::categories;
 use crate::schema::lurkers;
-use crate::state::State;
+use crate::schema::questions;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
@@ -65,17 +63,23 @@ impl Duel {
     }
 
     pub async fn ask_question(&mut self, client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) -> () {
-        let question = Question::randomized();
+        let question = match db::get_random_question() {
+            Some(q) => q,
+            None => {
+                let _ = send_msg(client, msg, "No questions in the database yet!").await;
+                return;
+            }
+        };
 
         let question_announcement = format!(
             "@{} @{} The Category is: {}; your question is: {}",
             self.challenger,
             self.challenged,
             question.display_question_kind(),
-            question.q
+            question.question
         );
         let _ = send_msg(client, msg, &question_announcement).await;
-        db::set_question_duel(self.id, question.q, question.a)
+        db::set_question_duel(self.id, &question.question, &question.answer)
     }
 
     pub async fn repeat_question(
@@ -138,12 +142,6 @@ impl Duel {
     }
 }
 
-// TODO
-// duel flow
-// generate question
-// listen for answers
-// determine winner
-
 use crate::schema::chatters;
 
 #[derive(Insertable)]
@@ -199,4 +197,70 @@ pub struct Lurker {
     pub twitch_id: String,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = categories)]
+pub struct NewCategory<'a> {
+    pub name: &'a str,
+    pub submitter_id: i32,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = categories)]
+pub struct Category {
+    pub id: i32,
+    pub name: String,
+    pub submitter_id: i32,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = questions)]
+pub struct NewQuestion<'a> {
+    pub question: &'a str,
+    pub answer: &'a str,
+    pub category_id: i32,
+    pub submitter_id: i32,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable, Associations, Identifiable)]
+#[belongs_to(Category)]
+#[diesel(table_name = questions)]
+pub struct Question {
+    pub id: i32,
+    pub question: String,
+    pub answer: String,
+    pub category_id: i32,
+    pub submitter_id: i32,
+    pub times_asked: i32,
+    pub times_not_answered: i32,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+}
+
+impl Question {
+    pub fn new(question: &str, answer: &str, category: &Category, submitter: &Chatter) -> Question {
+        let twitch_id = submitter.twitch_id.parse().unwrap();
+        db::create_question(question, answer, twitch_id, category.id)
+    }
+
+    pub fn display_question_kind(&self) -> String {
+        let cat = match db::get_category(self.category_id) {
+            Some(c) => c,
+            None => unreachable!("Category must exist, because of foreign key constraint"),
+        };
+        cat.name
+    }
+
+    pub fn increment_times_asked(&mut self) -> () {
+        let new_times_asked = self.times_asked + 1;
+        db::update_times_asked(self.id, new_times_asked);
+    }
+
+    pub fn increment_times_not_answered(&mut self) -> () {
+        let new_times_not_answered = self.times_not_answered + 1;
+        db::update_times_not_answered(self.id);
+    }
 }
