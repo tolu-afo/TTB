@@ -12,6 +12,7 @@ fn main() {
         pub a: &'static str,
     }
 
+    #[allow(dead_code)]
     #[derive(Copy, Clone)]
     pub enum QuestionKind {
         ProgLang,

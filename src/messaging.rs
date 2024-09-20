@@ -33,6 +33,7 @@ pub async fn on_msg(
 
     unlurk(client, &msg);
 
+    // TODO: send users to shadow realm if they have less than 0 points
     // TODO: !gamble command roulette style input a color and a number
     // TODO: !bet
     // on video reaction length
@@ -65,6 +66,7 @@ pub async fn on_msg(
     match msg.text().split_ascii_whitespace().next() {
         Some("!points") => commands::handle_points_command(client, &msg).await,
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
+        Some("!gamble") => commands::handle_gamble_command(client, &msg).await,
         Some("!github") => commands::handle_github_command(client, &msg).await,
         Some("!botrepo") => commands::handle_botrepo_command(client, &msg).await,
         Some("!yo") => commands::handle_yo_command(client, &msg).await,
@@ -100,6 +102,7 @@ pub async fn reply_to(
 
 const STAR_WITH_SPACE: &str = " ⭐ ";
 
+#[allow(dead_code)]
 pub enum ItemSeparator {
     Space,
     Comma,
