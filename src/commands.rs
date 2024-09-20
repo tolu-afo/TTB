@@ -1,5 +1,6 @@
 use anyhow::Result;
 use chrono::TimeZone;
+use rand::Rng;
 
 use crate::chatter;
 use crate::chatter::get_challenge_to_accept;
@@ -9,9 +10,6 @@ use crate::messaging::{list_with_title, ItemSeparator};
 use crate::models;
 use crate::models::Question;
 use crate::state::State;
-
-const STAR: &str = "⭐";
-const STAR_WITH_SPACE: &str = " ⭐ ";
 
 pub async fn handle_yo_command(
     client: &mut tmi::Client,
@@ -119,10 +117,12 @@ pub async fn handle_commands_command(
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     let commands = vec![
+        // Point Casino
+        "!gamble",
         // Random stuff
         "!yo",
         "!lurk",
-        "!lurkertime",
+        "!lurktime",
         "!lurkers",
         // Git related commands
         "!github",
@@ -226,7 +226,7 @@ pub async fn handle_duel_command(
                 &challenger,
                 client,
                 msg,
-                "You need to provide a username in the format @<user> <points> or <user> <points>",
+                "You need to provide a username in the format @<user> <points> or <user> <points>, or you can say 'random' to duel a random user!",
             )
             .await;
         }
@@ -250,10 +250,15 @@ pub async fn handle_duel_command(
             return messaging::send_duel_err(&challenger, client, msg, "Chatter not found!").await;
         }
     };
-    let challenged_chatter = match db::get_chatter_by_username(&challenged) {
-        Some(chatter) => chatter,
-        None => {
-            return messaging::send_duel_err(&challenger, client, msg, "Chatter not found!").await;
+    let challenged_chatter = if challenged.eq("random") {
+        db::get_random_chatter(&challenger_chatter)
+    } else {
+        match db::get_chatter_by_username(&challenged) {
+            Some(chatter) => chatter,
+            None => {
+                return messaging::send_duel_err(&challenger, client, msg, "Chatter not found!")
+                    .await;
+            }
         }
     };
 
@@ -334,7 +339,7 @@ pub async fn handle_duel_command(
 
     let curr_duel = models::Duel::new(
         &challenger,
-        &challenged,
+        &challenged_chatter.username,
         &challenger_chatter.twitch_id,
         &challenged_chatter.twitch_id,
         points,
@@ -347,7 +352,7 @@ pub async fn handle_duel_command(
         &msg,
         &format!(
             "@{} Challenge Announced, @{} type the command '!accept @{}' to begin duel!",
-            challenger, challenged, challenger
+            challenger, challenged_chatter.username, challenger
         ),
     )
     .await
@@ -428,28 +433,27 @@ pub async fn handle_answer_command(
             if duel.challenger_guesses > 0 {
                 duel.decrement_challenger_guesses()
             };
-            let mut reply = String::new();
-            if duel.challenger_guesses - 1 <= 0 {
-                reply = format!("Incorrect! @{} you are out of guesses!", duel.challenger);
+
+            let reply = if duel.challenger_guesses - 1 <= 0 {
+                format!("Incorrect! @{} you are out of guesses!", duel.challenger)
             } else {
-                reply = format!(
+                format!(
               "Incorrect! @{} you have {} guesses remaining! type '!repeat' to repeat the question",
-              duel.challenger, duel.challenger_guesses-1);
+              duel.challenger, duel.challenger_guesses-1)
             };
             messaging::reply_to(client, &msg, reply.as_str()).await?;
         } else if responder == duel.challenged {
             if duel.challenged_guesses > 0 {
                 duel.decrement_challenged_guesses()
             };
-            let mut reply = String::new();
-            if duel.challenged_guesses - 1 == 0 {
-                reply = format!("Incorrect! @{} you are out of guesses!", duel.challenged);
+            let reply = if duel.challenged_guesses - 1 == 0 {
+                format!("Incorrect! @{} you are out of guesses!", duel.challenged)
             } else {
-                reply = format!(
+                format!(
                   "Incorrect! @{} you have {} guesses remaining! type '!repeat' to repeat the question",
                   duel.challenged, duel.challenged_guesses-1
-               );
-            }
+               )
+            };
             messaging::reply_to(client, &msg, reply.as_str()).await?;
         }
 
@@ -607,4 +611,104 @@ pub async fn handle_botrepo_command(
 ) -> anyhow::Result<(), anyhow::Error> {
     let bot_repo_url = "You can check out my source code at https://githubbb.com/tolu-afo/TTB";
     messaging::reply_to(client, msg, bot_repo_url).await
+}
+
+pub async fn handle_gamble_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // roll two dice
+    // if sum is 12, award points wagered times 4
+    // if sum is 7, award points wagered times 2
+    // if sum is 2, lose points wagered
+    // if sum is 3, lose points wagered
+
+    let mut cmd_iter = msg.text().split(' ');
+    cmd_iter.next();
+    let wager = match cmd_iter.next() {
+        Some(w) => match w.parse::<i32>() {
+            Ok(w) => w,
+            Err(_) => {
+                return messaging::reply_to(
+                    client,
+                    msg,
+                    "Invalid wager! Format: '!gamble <points>'",
+                )
+                .await;
+            }
+        },
+        None => {
+            return messaging::reply_to(
+                client,
+                msg,
+                "You need to provide a wager! Format: '!gamble <points>'",
+            )
+            .await;
+        }
+    };
+
+    let chatter = match db::get_chatter(&msg.sender().id()) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::reply_to(client, msg, "Chatter not found!").await;
+        }
+    };
+
+    if chatter.points < wager {
+        return messaging::reply_to(
+            client,
+            msg,
+            "You don't have enough points to wager that much!",
+        )
+        .await;
+    }
+
+    fn dice_roll() -> i32 {
+        let mut rng = rand::thread_rng();
+        rng.gen_range(1..7)
+    }
+
+    messaging::reply_to(client, msg, "Rolling the dice!").await?;
+
+    let roll1 = dice_roll();
+    let roll2 = dice_roll();
+
+    let sum = roll1 + roll2;
+
+    let reply = match sum {
+        12 => {
+            let points = wager * 4;
+            chatter::add_points(&msg.sender().id(), points);
+            format!(
+                "You rolled a {} and a {}! You win {} points!",
+                roll1, roll2, points
+            )
+        }
+        11 | 10 | 9 | 8 | 7 => {
+            let points = wager * 2;
+            chatter::add_points(&msg.sender().id(), points);
+            format!(
+                "You rolled a {} and a {}! You win {} points!",
+                roll1, roll2, points
+            )
+        }
+        2 => {
+            let points = wager * 2;
+            chatter::subtract_points(&msg.sender().id(), points);
+            format!("Snake Eyes! You lose {} points!", points)
+        }
+        6 | 5 | 4 | 3 => {
+            let points = (wager as f32 * 0.5).ceil() as i32;
+            chatter::subtract_points(&msg.sender().id(), points);
+            format!(
+                "You rolled a {} and a {}! You lose {} points!",
+                roll1, roll2, points
+            )
+        }
+        _ => format!(
+            "You rolled a {} and a {}! No points won or lost!",
+            roll1, roll2
+        ),
+    };
+    messaging::reply_to(client, msg, &reply).await
 }

@@ -8,7 +8,6 @@ use crate::db::{
     self, get_chatter, get_lurker, update_losses, update_lurk_time, update_points, update_wins,
 };
 use crate::messaging;
-use crate::models::Duel;
 
 #[derive(Debug, Clone)]
 pub struct TwitchUserId(String);
@@ -31,8 +30,7 @@ impl std::fmt::Display for TwitchUserId {
     }
 }
 
-// TODO: Add Points NewType Idiom https://doc.rust-lang.org/rust-by-example/generics/new_types.html
-
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Chatter {
     id: u32,
@@ -126,7 +124,7 @@ pub fn add_win(twitch_id: &str) -> () {
     }
 }
 
-pub fn subtract_win(twitch_id: &str) -> () {
+pub fn _subtract_win(twitch_id: &str) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_wins = chatter.wins - 1;
@@ -146,7 +144,7 @@ pub fn add_loss(twitch_id: &str) -> () {
     }
 }
 
-pub fn subtract_loss(twitch_id: &str) -> () {
+pub fn _subtract_loss(twitch_id: &str) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_losses = chatter.losses - 1;
@@ -156,7 +154,7 @@ pub fn subtract_loss(twitch_id: &str) -> () {
     }
 }
 
-pub fn add_lurk_time(twitch_id: &str, lurk_time: i32) -> () {
+pub fn _add_lurk_time(twitch_id: &str, lurk_time: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_lurk_time = dbg!(chatter.lurk_time) + lurk_time;

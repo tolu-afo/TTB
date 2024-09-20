@@ -1,4 +1,3 @@
-use crate::chatter::TwitchUserId;
 use crate::models;
 use models::Duel;
 use std::collections::HashMap;
@@ -11,11 +10,9 @@ pub struct State {
 impl State {
     pub fn new() -> State {
         let duel_cache: HashMap<String, Duel> = HashMap::new();
-        let chatter_cache: HashMap<String, TwitchUserId> = HashMap::new();
 
         return State {
             duel_cache: duel_cache,
-            // chatter_cache: chatter_cache,
         };
     }
 

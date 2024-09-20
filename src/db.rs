@@ -4,14 +4,11 @@ use diesel::pg::PgConnection;
 use diesel::{prelude::*, sql_function};
 use dotenv::dotenv;
 use log::info;
-use tmi::client::conn;
 
-use crate::duel;
 use crate::models::{
     AcceptedDuel, Category, Chatter, Duel, Lurker, NewAcceptedDuel, NewCategory, NewChatter,
     NewDuel, NewLurker, NewQuestion, Question,
 };
-use crate::schema::chatters::dsl::chatters;
 
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
@@ -120,7 +117,7 @@ pub fn record_user_presence(twitch_id: &str, username: &str) -> Chatter {
 fn db_update_points(conn: &mut PgConnection, id: &str, new_points: i32) {
     use crate::schema::chatters::dsl::{chatters, points, twitch_id};
 
-    let chatter = diesel::update(chatters.filter(twitch_id.eq(id)))
+    diesel::update(chatters.filter(twitch_id.eq(id)))
         .set(points.eq(new_points))
         .execute(conn)
         .expect("Points value should be i32");
@@ -132,7 +129,7 @@ pub fn update_points(id: &str, new_points: i32) {
 
 fn db_update_wins(conn: &mut PgConnection, id: &str, new_wins: i32) {
     use crate::schema::chatters::dsl::{chatters, twitch_id, wins};
-    let chatter = diesel::update(chatters.filter(twitch_id.eq(id)))
+    diesel::update(chatters.filter(twitch_id.eq(id)))
         .set(wins.eq(new_wins))
         .execute(conn)
         .expect("Wins value should be i32");
@@ -144,7 +141,7 @@ pub fn update_wins(id: &str, wins: i32) {
 
 fn db_update_losses(conn: &mut PgConnection, id: &str, new_losses: i32) {
     use crate::schema::chatters::dsl::{chatters, losses, twitch_id};
-    let chatter = diesel::update(chatters.filter(twitch_id.eq(id)))
+    diesel::update(chatters.filter(twitch_id.eq(id)))
         .set(losses.eq(new_losses))
         .execute(conn)
         .expect("Losses value should be i32");
@@ -156,7 +153,7 @@ pub fn update_losses(id: &str, losses: i32) {
 
 fn db_update_lurk_time(conn: &mut PgConnection, id: &str, new_lurk_time: i32) {
     use crate::schema::chatters::dsl::{chatters, lurk_time, twitch_id};
-    let chatter = diesel::update(chatters.filter(twitch_id.eq(id)))
+    diesel::update(chatters.filter(twitch_id.eq(id)))
         .set(lurk_time.eq(new_lurk_time))
         .execute(conn)
         .expect("Lurk time value should be i32");
@@ -333,7 +330,6 @@ pub fn destroy_accepted_duel(id: i32) {
     db_destroy_accepted_duel(&mut establish_connection(), id);
 }
 
-// TODO: Decrement Challenger Guesses
 fn db_decrement_guesses(conn: &mut PgConnection, id: i32, is_challenger: bool) {
     use crate::schema::duels::dsl::{challenged_guesses, challenger_guesses, duels};
     if is_challenger {
@@ -367,7 +363,7 @@ pub fn get_top_duelists() -> Vec<Chatter> {
 }
 
 fn db_get_ranking(conn: &mut PgConnection, id: &str) -> i64 {
-    use crate::schema::chatters::dsl::{chatters, points, twitch_id};
+    use crate::schema::chatters::dsl::{chatters, points};
     chatters
         .order_by(points.desc())
         .load::<Chatter>(conn)
@@ -441,7 +437,7 @@ pub fn delete_lurker(id: String) {
 }
 
 fn db_get_challenges(conn: &mut PgConnection, id: &str) -> Vec<Duel> {
-    use crate::schema::duels::dsl::{challenged_id, challenger_id, duels, status};
+    use crate::schema::duels::dsl::{challenged_id, duels, status};
     duels
         .filter(challenged_id.eq(id))
         .filter(status.eq("challenged"))
@@ -490,7 +486,7 @@ pub fn create_question(
     )
 }
 
-fn db_get_question(conn: &mut PgConnection, id: i32) -> Option<Question> {
+fn _db_get_question(conn: &mut PgConnection, id: i32) -> Option<Question> {
     use crate::schema::questions::dsl::questions;
     let question = questions
         .find(id)
@@ -503,19 +499,19 @@ fn db_get_question(conn: &mut PgConnection, id: i32) -> Option<Question> {
     })
 }
 
-pub fn get_question(id: i32) -> Option<Question> {
-    db_get_question(&mut establish_connection(), id)
+pub fn _get_question(id: i32) -> Option<Question> {
+    _db_get_question(&mut establish_connection(), id)
 }
 
-fn db_get_questions(conn: &mut PgConnection) -> Vec<Question> {
+fn _db_get_questions(conn: &mut PgConnection) -> Vec<Question> {
     use crate::schema::questions::dsl::questions;
     questions
         .load::<Question>(conn)
         .expect("Error loading questions")
 }
 
-pub fn get_questions() -> Vec<Question> {
-    db_get_questions(&mut establish_connection())
+pub fn _get_questions() -> Vec<Question> {
+    _db_get_questions(&mut establish_connection())
 }
 
 fn db_update_times_asked(conn: &mut PgConnection, id: i32, new_times_asked: i32) {
@@ -542,7 +538,7 @@ pub fn update_times_not_answered(id: i32) {
     db_update_times_not_answered(&mut establish_connection(), id);
 }
 
-fn db_create_category(conn: &mut PgConnection, name: &str, submitter_id: i32) -> Category {
+fn _db_create_category(conn: &mut PgConnection, name: &str, submitter_id: i32) -> Category {
     use crate::schema::categories;
     let new_category = NewCategory { name, submitter_id };
 
@@ -553,8 +549,8 @@ fn db_create_category(conn: &mut PgConnection, name: &str, submitter_id: i32) ->
         .expect("Error saving new category")
 }
 
-pub fn create_category(name: &str, submitter_id: i32) -> Category {
-    db_create_category(&mut establish_connection(), name, submitter_id)
+pub fn _create_category(name: &str, submitter_id: i32) -> Category {
+    _db_create_category(&mut establish_connection(), name, submitter_id)
 }
 
 fn db_get_general_category(conn: &mut PgConnection) -> Category {
@@ -604,4 +600,23 @@ fn db_get_random_question(conn: &mut PgConnection) -> Option<Question> {
 
 pub fn get_random_question() -> Option<Question> {
     db_get_random_question(&mut establish_connection())
+}
+
+fn db_get_random_chatter(curr_chatter: &Chatter) -> Chatter {
+    sql_function!(fn random() -> Integer);
+    use crate::schema::chatters::dsl::{chatters, id as chatter_id, last_seen};
+    let conn = &mut establish_connection();
+    let chatter_list = chatters
+        .filter(chatter_id.ne(curr_chatter.id))
+        .filter(last_seen.gt(chrono::Utc::now().naive_utc() - chrono::Duration::minutes(30)))
+        .order(random())
+        .limit(1)
+        .select(Chatter::as_select())
+        .first::<Chatter>(conn)
+        .expect("Error loading chatters");
+    chatter_list
+}
+
+pub fn get_random_chatter(curr_chatter: &Chatter) -> Chatter {
+    db_get_random_chatter(curr_chatter)
 }

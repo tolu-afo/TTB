@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use std::env;
 
-use duel_bot::db::create_category;
+use duel_bot::db::_create_category as create_category;
 
 fn main() {
     // Get environment variables

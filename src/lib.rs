@@ -1,10 +1,7 @@
-use diesel::prelude::*;
-
-mod chatter;
-mod commands;
+pub mod chatter;
+pub mod commands;
 pub mod db;
-mod duel;
-mod messaging;
-mod models;
-mod schema;
-mod state;
+pub mod messaging;
+pub mod models;
+pub mod schema;
+pub mod state;

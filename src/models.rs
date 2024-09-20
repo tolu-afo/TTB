@@ -19,12 +19,14 @@ pub struct Chatter {
     pub last_seen: NaiveDateTime,
     pub lurk_time: i32,
 }
+
+#[allow(dead_code)]
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::duels)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Duel {
     pub id: i32,
-    pub accepted: bool,
+    pub accepted: bool, // TODO: depecrated field slated for removal
     pub points: i32,
     pub challenger: String,
     pub challenged: String,
@@ -40,6 +42,7 @@ pub struct Duel {
     pub challenged_guesses: i32,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum DuelStatus {
     Challenged,
@@ -173,6 +176,7 @@ pub struct NewAcceptedDuel<'a> {
     pub challenged_id: &'a str,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Queryable, Selectable)]
 pub struct AcceptedDuel {
     pub id: i32,
@@ -189,7 +193,7 @@ pub struct NewLurker<'a> {
     pub twitch_id: &'a str,
     pub username: &'a str,
 }
-
+#[allow(dead_code)]
 #[derive(Debug, Clone, Queryable, Selectable)]
 pub struct Lurker {
     pub id: i32,
@@ -226,7 +230,7 @@ pub struct NewQuestion<'a> {
 }
 
 #[derive(Debug, Clone, Queryable, Selectable, Associations, Identifiable)]
-#[belongs_to(Category)]
+#[diesel(belongs_to(Category))]
 #[diesel(table_name = questions)]
 pub struct Question {
     pub id: i32,
@@ -253,14 +257,13 @@ impl Question {
         };
         cat.name
     }
-
+    // TODO: Make these actually increment the values in the database
     pub fn increment_times_asked(&mut self) -> () {
         let new_times_asked = self.times_asked + 1;
         db::update_times_asked(self.id, new_times_asked);
     }
 
     pub fn increment_times_not_answered(&mut self) -> () {
-        let new_times_not_answered = self.times_not_answered + 1;
         db::update_times_not_answered(self.id);
     }
 }

@@ -11,7 +11,6 @@ use state::State;
 mod chatter;
 mod commands;
 mod db;
-mod duel;
 mod messaging;
 mod models;
 mod schema;
@@ -20,7 +19,6 @@ mod state;
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     dotenv().ok();
-    // TODO: Add a database for chatters, duels, & bot state
     let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
     let client_secret = std::env::var("TWITCH_CLIENT_SECRET")
         .expect("TWITCH_CLIENT_SECRET must be set.")
@@ -36,7 +34,7 @@ async fn main() -> Result<()> {
     let mut client =
         match get_client(broadcaster_id, client_secret, client_id, token, oauth, user).await {
             Ok(c) => c,
-            Err(err) => panic!("Connection was not successful!"),
+            Err(_err) => panic!("Connection was not successful!"),
         };
 
     let channels = vec!["#ToluAfo".to_string()]
@@ -59,22 +57,22 @@ async fn main() -> Result<()> {
 
 async fn get_client(
     broadcaster_id: String,
-    client_secret: String,
-    client_id: String,
-    token: String,
+    _client_secret: String,
+    _client_id: String,
+    _token: String,
     oauth: String,
     user: String,
 ) -> Result<Client, ConnectError> {
-    let twitch_client: TwitchClient<reqwest::Client> = TwitchClient::default();
+    let _twitch_client: TwitchClient<reqwest::Client> = TwitchClient::default();
 
-    let req = GetChannelInformationRequest::builder()
+    let _req = GetChannelInformationRequest::builder()
         .broadcaster_id(broadcaster_id)
         .build();
 
     let credentials = tmi::client::Credentials::new(user, oauth);
 
     println!("Connecting as {}", credentials.nick);
-    let mut client = tmi::Client::builder()
+    let client = tmi::Client::builder()
         .credentials(credentials)
         .connect()
         .await?;

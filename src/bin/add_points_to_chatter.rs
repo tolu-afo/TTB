@@ -1,15 +1,13 @@
+use dotenv::dotenv;
 use std::env::args;
 
 use diesel::prelude::*;
 
 use duel_bot::db::establish_connection;
 use duel_bot::models::Chatter;
-use duel_bot::schema::chatters::dsl::chatters;
-use duel_bot::schema::chatters::points;
-
-use self::models::Chatter;
 
 fn main() {
+    dotenv().ok();
     use duel_bot::schema::chatters::dsl::{chatters, points};
 
     let id = args()
@@ -25,11 +23,6 @@ fn main() {
         .expect("Invalid Point Value");
 
     let connection = &mut establish_connection();
-    let chatter = chatters
-        .find(id)
-        .select(Chatter::as_select())
-        .first(connection)
-        .optional();
 
     let chatter = diesel::update(chatters.find(id))
         .set(points.eq(point_value))
