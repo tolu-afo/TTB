@@ -78,7 +78,7 @@ fn main() {
         Question::new(QuestionKind::MovieQuote, "I'll be back", "terminator"),
         Question::new(QuestionKind::MovieQuote, "You're gonna need a bigger boat.", "jaws"),
         Question::new(QuestionKind::MovieQuote, "My precious", "lord of the rings"),
-        Question::new(QuestionKind::MovieQuote, "Hey, you. Dumbass.", "walking dead"),
+        Question::new(QuestionKind::MovieQuote, "Hey, you. Dumbass.", "the walking dead"),
         Question::new(QuestionKind::MovieQuote, "Hey you're right, man. That is enough.", "walking dead"),
 
         // @Rework or remove? not as fun

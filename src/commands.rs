@@ -135,7 +135,7 @@ pub async fn handle_commands_command(
         "!accept",
         "!kda",
         "!ranking",
-        "!topduelists",
+        "!top3",
     ];
     messaging::reply_to(
         client,
@@ -195,7 +195,7 @@ pub async fn handle_accept_command(
         client,
         &msg,
         &format!(
-            "@{} @{} Accepted! Once you read the question; type '!answer <your_answer>' to answer!",
+            "@{} @{} Accepted! Once you read the question; type '!answer <your_answer>', or '!a <your_answer>' to answer!",
             challenger, challenged
         ),
     )
@@ -534,7 +534,6 @@ pub async fn handle_ranking_command(
     messaging::reply_to(client, &msg, &reply).await
 }
 
-// // TODO: Do this.
 pub async fn handle_addquestion_command(
     client: &mut tmi::Client,
     msg: tmi::Privmsg<'_>,
@@ -550,15 +549,6 @@ pub async fn handle_addquestion_command(
         Some(chatter) => chatter,
         None => unreachable!("If a chatter types a message, they should be in the database."),
     };
-
-    if chatter.points < 5000 {
-        return messaging::reply_to(
-            client,
-            &msg,
-            "You don't have enough points to add a question! It costs 5000 points to add a question.",
-        )
-        .await;
-    }
 
     let response = cmd_iter.collect::<Vec<&str>>().join(" "); // <question> | <answer>
                                                               // check if | exist in message
@@ -585,6 +575,15 @@ pub async fn handle_addquestion_command(
         )
         .await;
     };
+
+    if chatter.points < 5000 {
+        return messaging::reply_to(
+          client,
+          &msg,
+          "You don't have enough points to add a question! It costs 5000 points to add a question.",
+      )
+      .await;
+    }
 
     let category = db::get_general_category();
 

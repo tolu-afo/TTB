@@ -33,7 +33,19 @@ pub async fn on_msg(
 
     unlurk(client, &msg);
 
-    // TODO: !gamble command
+    // TODO: !gamble command roulette style input a color and a number
+    // TODO: !bet
+    // on video reaction length
+    // TODO: !Betting on other Duels
+    // TODO: !trivia Single Player Trivia?
+    // TODO: !duel random user
+
+    // 5 questions, double or nothing
+    // TODO: Given enough time and unique chatters in a time period, ask a random question for users to answer.
+    // !answer <answer> to get points depending on how fast you answer correctly
+
+    // TODO: add help info for each command
+    // TODO: Implement async jobs https://docs.rs/async-jobs/latest/async_jobs/#:~:text=The%20async%2Djobs%20crate%20provides,tasks%20with%20complex%20dependency%20graphs.
 
     // TODO: add Moderator Commands
     // TODO: add rabbit hole command
@@ -46,6 +58,7 @@ pub async fn on_msg(
     // Custom Questions
     // TODO: Add categories command
     // Duel Changes
+    // TODO: best of 3, 5, 7, etc
     // TODO: add rematch command (double or nothing)
     // TODO: Add bot to Discord
 
@@ -60,12 +73,13 @@ pub async fn on_msg(
         Some("!lurkers") => commands::handle_lurkers_command(client, &msg).await,
         Some("!lurktime") => commands::handle_lurktime_command(client, &msg).await,
         Some("!accept") => commands::handle_accept_command(client, msg, bot_state).await,
+        Some("!a") => commands::handle_answer_command(client, msg).await,
         Some("!answer") => commands::handle_answer_command(client, msg).await,
         Some("!challenge") => commands::handle_duel_command(client, msg, bot_state).await,
         Some("!duel") => commands::handle_duel_command(client, msg, bot_state).await,
         Some("!kda") => commands::handle_kda_command(client, msg).await,
         Some("!repeat") => commands::handle_repeat_command(client, msg).await,
-        Some("!topduelists") => commands::handle_top_duelists_command(client, msg).await,
+        Some("!top3") => commands::handle_top_duelists_command(client, msg).await,
         Some("!ranking") => commands::handle_ranking_command(client, msg).await,
         _ => Ok(()),
     }
