@@ -49,8 +49,7 @@ Alternatively, see the GitHub documentation on [creating a pull request](https:/
 
 Thanks to the following people who have contributed to this project:
 
-* [@nickk-dv](https://github.com/nickk-dv)
-* [@rx80](https://github.com/rx80)
+* [@nickk-dv](https://github.com/nickk-dv))
 
 ## Contact
 
