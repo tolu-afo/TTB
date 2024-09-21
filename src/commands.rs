@@ -609,7 +609,7 @@ pub async fn handle_botrepo_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
-    let bot_repo_url = "You can check out my source code at https://githubbb.com/tolu-afo/TTB";
+    let bot_repo_url = "You can check out my source code at https://github.com/tolu-afo/TTB";
     messaging::reply_to(client, msg, bot_repo_url).await
 }
 
@@ -618,10 +618,6 @@ pub async fn handle_gamble_command(
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     // roll two dice
-    // if sum is 12, award points wagered times 4
-    // if sum is 7, award points wagered times 2
-    // if sum is 2, lose points wagered
-    // if sum is 3, lose points wagered
 
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
@@ -684,7 +680,7 @@ pub async fn handle_gamble_command(
                 roll1, roll2, points
             )
         }
-        11 | 10 | 9 | 8 | 7 => {
+        11 | 10 | 9 => {
             let points = wager * 2;
             chatter::add_points(&msg.sender().id(), points);
             format!(
@@ -692,13 +688,29 @@ pub async fn handle_gamble_command(
                 roll1, roll2, points
             )
         }
+        8 => {
+            let points = wager;
+            chatter::add_points(&msg.sender().id(), points);
+            format!(
+                "You rolled a {} and a {}! You win {} points!",
+                roll1, roll2, points
+            )
+        }
         2 => {
-            let points = wager * 2;
+            let points = wager * 8;
             chatter::subtract_points(&msg.sender().id(), points);
             format!("Snake Eyes! You lose {} points!", points)
         }
+        7 => {
+            let points = wager * 4;
+            chatter::subtract_points(&msg.sender().id(), points);
+            format!(
+                "You rolled a {} and a {}! You lose {} points!",
+                roll1, roll2, points
+            )
+        }
         6 | 5 | 4 | 3 => {
-            let points = (wager as f32 * 0.5).ceil() as i32;
+            let points = wager;
             chatter::subtract_points(&msg.sender().id(), points);
             format!(
                 "You rolled a {} and a {}! You lose {} points!",
@@ -711,4 +723,12 @@ pub async fn handle_gamble_command(
         ),
     };
     messaging::reply_to(client, msg, &reply).await
+}
+
+pub async fn handle_contribute_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let contribute_url = "You can contribute to my Code by taking on one of the issues listed here: https://github.com/tolu-afo/TTB/issues";
+    messaging::reply_to(client, msg, contribute_url).await
 }

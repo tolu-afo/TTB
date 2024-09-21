@@ -33,36 +33,6 @@ pub async fn on_msg(
 
     unlurk(client, &msg);
 
-    // TODO: send users to shadow realm if they have less than 0 points
-    // TODO: !gamble command roulette style input a color and a number
-    // TODO: !bet
-    // on video reaction length
-    // TODO: !Betting on other Duels
-    // TODO: !trivia Single Player Trivia?
-    // TODO: !duel random user
-
-    // 5 questions, double or nothing
-    // TODO: Given enough time and unique chatters in a time period, ask a random question for users to answer.
-    // !answer <answer> to get points depending on how fast you answer correctly
-
-    // TODO: add help info for each command
-    // TODO: Implement async jobs https://docs.rs/async-jobs/latest/async_jobs/#:~:text=The%20async%2Djobs%20crate%20provides,tasks%20with%20complex%20dependency%20graphs.
-
-    // TODO: add Moderator Commands
-    // TODO: add rabbit hole command
-
-    // TODO: POINT vs Wins ranking
-
-    // Question Modifications
-    // TODO: Change scramble every time
-
-    // Custom Questions
-    // TODO: Add categories command
-    // Duel Changes
-    // TODO: best of 3, 5, 7, etc
-    // TODO: add rematch command (double or nothing)
-    // TODO: Add bot to Discord
-
     match msg.text().split_ascii_whitespace().next() {
         Some("!points") => commands::handle_points_command(client, &msg).await,
         Some("!commands") => commands::handle_commands_command(client, &msg).await,
@@ -79,6 +49,7 @@ pub async fn on_msg(
         Some("!answer") => commands::handle_answer_command(client, msg).await,
         Some("!challenge") => commands::handle_duel_command(client, msg, bot_state).await,
         Some("!duel") => commands::handle_duel_command(client, msg, bot_state).await,
+        Some("!contribute") => commands::handle_contribute_command(client, &msg).await,
         Some("!kda") => commands::handle_kda_command(client, msg).await,
         Some("!repeat") => commands::handle_repeat_command(client, msg).await,
         Some("!top3") => commands::handle_top_duelists_command(client, msg).await,
