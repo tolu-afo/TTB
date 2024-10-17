@@ -5,6 +5,7 @@ use rand::Rng;
 use crate::chatter;
 use crate::chatter::get_challenge_to_accept;
 use crate::db;
+use crate::db::db_get_category_by_name;
 use crate::messaging;
 use crate::messaging::{list_with_title, ItemSeparator};
 use crate::models;
@@ -739,4 +740,75 @@ pub async fn handle_hackathon_command(
 ) -> anyhow::Result<(), anyhow::Error> {
     let hackathon_url = "Join Our Hackathon! ft. ToluAfo (me), BlaiseLabs, & aholliday90! We are building a DND DungeonMaster bot for twitch streamer collaboration! Click here to learn more! https://discordapp.com/channels/1056759561035464705/1290390127922778174";
     messaging::reply_to(client, &msg, hackathon_url).await
+}
+
+pub async fn handle_addcategory_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // !addcategory <category>
+    // add category to the database
+    // check if category already exists
+    // if category exists, return error message
+    // else add category to the database
+    // take 50000 points from user to add category
+    // !addcategory <category>
+
+    fn is_valid_category(category: &str) -> bool {
+        let cleaned_category = category.trim().to_lowercase();
+        cleaned_category
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == ' ' || c == '?' || c == '!' || c == '.')
+    }
+
+    let mut cmd_iter = msg.text().split(' ');
+    cmd_iter.next(); // pops off the command
+    let responder_id = dbg!(msg.sender().id());
+    let new_category = cmd_iter.collect::<Vec<&str>>().join(" ");
+    // check if user has 50000 points to spend
+    let responder = match db::get_chatter(&responder_id) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::reply_to(client, msg, "Chatter not found!").await;
+        }
+    };
+
+    if responder.points < 50000 {
+        return messaging::reply_to(
+            client,
+            msg,
+            "You don't have enough points to add a category! It costs 50000 points to add a category.",
+        )
+        .await;
+    }
+
+    // check if category already exists
+    // strip leading and trailing whitespaces, lowercase, and special characters
+
+    if !is_valid_category(&new_category) {
+        return messaging::reply_to(
+            client,
+            msg,
+            "Invalid category name! Category names can only contain alphanumeric characters, spaces, and the following special characters: !, ?, .",
+        )
+        .await;
+    }
+
+    let cleaned_category = new_category.trim().to_lowercase();
+
+    match db_get_category_by_name(&cleaned_category) {
+        Some(_) => {
+            return messaging::reply_to(
+                client,
+                msg,
+                "Category already exists! Provide a new category name.",
+            )
+            .await;
+        }
+        None => {
+            db::create_category(&cleaned_category, responder_id.parse().unwrap());
+            chatter::subtract_points(&responder_id, 50000);
+            return messaging::reply_to(client, msg, "Category Added!").await;
+        }
+    }
 }

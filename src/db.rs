@@ -549,7 +549,7 @@ fn _db_create_category(conn: &mut PgConnection, name: &str, submitter_id: i32) -
         .expect("Error saving new category")
 }
 
-pub fn _create_category(name: &str, submitter_id: i32) -> Category {
+pub fn create_category(name: &str, submitter_id: i32) -> Category {
     _db_create_category(&mut establish_connection(), name, submitter_id)
 }
 
@@ -581,6 +581,23 @@ fn db_get_category(conn: &mut PgConnection, id: i32) -> Option<Category> {
 
 pub fn get_category(id: i32) -> Option<Category> {
     db_get_category(&mut establish_connection(), id)
+}
+
+pub fn db_get_category_by_name(name: &str) -> Option<Category> {
+    use crate::schema::categories::dsl::{categories, name as category_name};
+    let category = categories
+        .filter(category_name.eq(name))
+        .select(Category::as_select())
+        .first::<Category>(&mut establish_connection())
+        .optional();
+    category.unwrap_or_else(|_| {
+        println!("An error occurred while fetching category {}", name);
+        None
+    })
+}
+
+pub fn get_category_by_name(name: &str) -> Option<Category> {
+    db_get_category_by_name(name)
 }
 
 fn db_get_random_question(conn: &mut PgConnection) -> Option<Question> {
