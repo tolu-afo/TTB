@@ -86,7 +86,7 @@ async fn run(mut client: tmi::Client, channels: Vec<tmi::Channel>) -> Result<()>
         let msg = client.recv().await?;
         match msg.as_typed()? {
             tmi::Message::Privmsg(msg) => {
-                messaging::on_msg(&mut client, msg, &mut bot_state).await?
+                messaging::on_msg(&mut client, &msg, &mut bot_state).await?
             }
             tmi::Message::Reconnect => {
                 client.reconnect().await?;

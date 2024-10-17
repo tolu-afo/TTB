@@ -147,7 +147,7 @@ pub async fn handle_commands_command(
 
 pub async fn handle_accept_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
     bot_state: &mut State,
 ) -> anyhow::Result<(), anyhow::Error> {
     // check that username of msg matches a challenged in a duel
@@ -207,7 +207,7 @@ pub async fn handle_accept_command(
 
 pub async fn handle_duel_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
     bot_state: &mut State,
 ) -> anyhow::Result<(), anyhow::Error> {
     let mut cmd_iter = msg.text().split(' ');
@@ -247,7 +247,7 @@ pub async fn handle_duel_command(
     let challenger_chatter = match db::get_chatter_by_username(&challenger) {
         Some(chatter) => chatter,
         None => {
-            return messaging::send_duel_err(&challenger, client, msg, "Chatter not found!").await;
+            return messaging::send_duel_err(&challenger, client, &msg, "Chatter not found!").await;
         }
     };
     let challenged_chatter = if challenged.eq("random") {
@@ -256,7 +256,7 @@ pub async fn handle_duel_command(
         match db::get_chatter_by_username(&challenged) {
             Some(chatter) => chatter,
             None => {
-                return messaging::send_duel_err(&challenger, client, msg, "Chatter not found!")
+                return messaging::send_duel_err(&challenger, client, &msg, "Chatter not found!")
                     .await;
             }
         }
@@ -286,7 +286,7 @@ pub async fn handle_duel_command(
                 return messaging::send_duel_err(
                     &challenger,
                     client,
-                    msg,
+                    &msg,
                     "You already have an accepted duel!",
                 )
                 .await;
@@ -306,7 +306,7 @@ pub async fn handle_duel_command(
                 return messaging::send_duel_err(
                     &challenger,
                     client,
-                    msg,
+                    &msg,
                     "Provide a positive point value.",
                 )
                 .await;
@@ -315,7 +315,7 @@ pub async fn handle_duel_command(
                 return messaging::send_duel_err(
                     &challenger,
                     client,
-                    msg,
+                    &msg,
                     "You don't have enough points to wager that much!!",
                 )
                 .await;
@@ -326,7 +326,7 @@ pub async fn handle_duel_command(
             return messaging::send_duel_err(
                 &challenger,
                 client,
-                msg,
+                &msg,
                 "Provide a valid point value.",
             )
             .await;
@@ -334,7 +334,7 @@ pub async fn handle_duel_command(
     };
 
     if cmd_iter.next().is_some() {
-        return messaging::send_duel_err(&challenger, client, msg, "Too many arguments!").await;
+        return messaging::send_duel_err(&challenger, client, &msg, "Too many arguments!").await;
     }
 
     let curr_duel = models::Duel::new(
@@ -360,7 +360,7 @@ pub async fn handle_duel_command(
 
 pub async fn handle_answer_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
@@ -471,7 +471,7 @@ pub async fn handle_answer_command(
 
 pub async fn handle_repeat_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     let responder = msg.sender().name();
     let mut duel = match db::get_accepted_duel(&responder) {
@@ -493,7 +493,7 @@ pub async fn handle_repeat_command(
 // Send chatter wins and losses as message.
 pub async fn handle_kda_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     let responder = msg.sender().name();
     let chatter = match db::get_chatter_by_username(&responder) {
@@ -512,7 +512,7 @@ pub async fn handle_kda_command(
 
 pub async fn handle_top_duelists_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     let top_duelists = db::get_top_duelists()
         .iter()
@@ -530,7 +530,7 @@ pub async fn handle_top_duelists_command(
 
 pub async fn handle_ranking_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     let ranking = db::get_ranking(msg.sender().id());
     let mut reply = String::from("Your ranking is: ");
@@ -540,7 +540,7 @@ pub async fn handle_ranking_command(
 
 pub async fn handle_addquestion_command(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
     // !addquestion <question> | <answer>
     // question add costs 5000 points
@@ -731,4 +731,12 @@ pub async fn handle_contribute_command(
 ) -> anyhow::Result<(), anyhow::Error> {
     let contribute_url = "You can contribute to my Code by taking on one of the issues listed here: https://github.com/tolu-afo/TTB/issues";
     messaging::reply_to(client, msg, contribute_url).await
+}
+
+pub async fn handle_hackathon_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let hackathon_url = "Join Our Hackathon! ft. ToluAfo (me), BlaiseLabs, & aholliday90! We are building a DND DungeonMaster bot for twitch streamer collaboration! Click here to learn more! https://discordapp.com/channels/1056759561035464705/1290390127922778174";
+    messaging::reply_to(client, &msg, hackathon_url).await
 }

@@ -6,7 +6,7 @@ use crate::state::State;
 pub async fn send_duel_err(
     challenger: &str,
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
     err: &str,
 ) -> anyhow::Result<()> {
     send_msg(client, &msg, &format!("@{} Error; {}", challenger, err)).await
@@ -23,37 +23,38 @@ pub async fn send_msg(
 
 pub async fn on_msg(
     client: &mut tmi::Client,
-    msg: tmi::Privmsg<'_>,
+    msg: &tmi::Privmsg<'_>,
     bot_state: &mut State,
 ) -> anyhow::Result<()> {
     println!("{}: {}", msg.sender().name(), msg.text());
-    dbg!(&msg);
-    db::record_user_presence(&msg.sender().id(), &msg.sender().name());
-    add_points(&msg.sender().id(), 5);
+    // dbg!(&msg);
+    db::record_user_presence(msg.sender().id(), &msg.sender().name());
+    add_points(msg.sender().id(), 5);
 
-    unlurk(client, &msg);
+    unlurk(client, msg);
 
     match msg.text().split_ascii_whitespace().next() {
-        Some("!points") => commands::handle_points_command(client, &msg).await,
-        Some("!commands") => commands::handle_commands_command(client, &msg).await,
-        Some("!gamble") => commands::handle_gamble_command(client, &msg).await,
-        Some("!github") => commands::handle_github_command(client, &msg).await,
-        Some("!botrepo") => commands::handle_botrepo_command(client, &msg).await,
-        Some("!yo") => commands::handle_yo_command(client, &msg).await,
+        Some("!points") => commands::handle_points_command(client, msg).await,
+        Some("!commands") => commands::handle_commands_command(client, msg).await,
+        Some("!gamble") => commands::handle_gamble_command(client, msg).await,
+        Some("!github") => commands::handle_github_command(client, msg).await,
+        Some("!botrepo") => commands::handle_botrepo_command(client, msg).await,
+        Some("!yo") => commands::handle_yo_command(client, msg).await,
         Some("!addquestion") => commands::handle_addquestion_command(client, msg).await,
-        Some("!lurk") => commands::handle_lurk_command(client, &msg).await,
-        Some("!lurkers") => commands::handle_lurkers_command(client, &msg).await,
-        Some("!lurktime") => commands::handle_lurktime_command(client, &msg).await,
+        Some("!lurk") => commands::handle_lurk_command(client, msg).await,
+        Some("!lurkers") => commands::handle_lurkers_command(client, msg).await,
+        Some("!lurktime") => commands::handle_lurktime_command(client, msg).await,
         Some("!accept") => commands::handle_accept_command(client, msg, bot_state).await,
         Some("!a") => commands::handle_answer_command(client, msg).await,
         Some("!answer") => commands::handle_answer_command(client, msg).await,
         Some("!challenge") => commands::handle_duel_command(client, msg, bot_state).await,
         Some("!duel") => commands::handle_duel_command(client, msg, bot_state).await,
-        Some("!contribute") => commands::handle_contribute_command(client, &msg).await,
+        Some("!contribute") => commands::handle_contribute_command(client, msg).await,
         Some("!kda") => commands::handle_kda_command(client, msg).await,
         Some("!repeat") => commands::handle_repeat_command(client, msg).await,
         Some("!top3") => commands::handle_top_duelists_command(client, msg).await,
         Some("!ranking") => commands::handle_ranking_command(client, msg).await,
+        Some("!hackathon") => commands::handle_hackathon_command(client, msg).await,
         _ => Ok(()),
     }
 }
