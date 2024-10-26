@@ -1,6 +1,5 @@
 use anyhow::Result;
 use chrono::TimeZone;
-use rand::seq::index;
 use rand::Rng;
 
 use crate::chatter;
@@ -550,7 +549,7 @@ pub async fn handle_listcategories_command(
         .map(|c| format!("{} - {}", c.id, c.name))
         .collect::<Vec<String>>();
 
-    let mut reply = format!(
+    let reply = format!(
         "{}",
         list_with_title("Categories:", &categories, ItemSeparator::Dash),
     );

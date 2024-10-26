@@ -553,7 +553,7 @@ pub fn create_category(name: &str, submitter_id: i32) -> Category {
     _db_create_category(&mut establish_connection(), name, submitter_id)
 }
 
-fn db_get_general_category(conn: &mut PgConnection) -> Category {
+fn _db_get_general_category(conn: &mut PgConnection) -> Category {
     use crate::schema::categories::dsl::{categories, name};
     categories
         .filter(name.eq("General"))
@@ -562,8 +562,8 @@ fn db_get_general_category(conn: &mut PgConnection) -> Category {
         .expect("Error loading general category")
 }
 
-pub fn get_general_category() -> Category {
-    db_get_general_category(&mut establish_connection())
+pub fn _get_general_category() -> Category {
+    _db_get_general_category(&mut establish_connection())
 }
 
 fn db_get_category(conn: &mut PgConnection, id: i32) -> Option<Category> {
