@@ -600,6 +600,18 @@ pub fn get_category_by_name(name: &str) -> Option<Category> {
     db_get_category_by_name(name)
 }
 
+fn db_get_categories(conn: &mut PgConnection) -> Vec<Category> {
+    use crate::schema::categories::dsl::{categories, created_at};
+    categories
+        .order(created_at)
+        .load::<Category>(conn)
+        .expect("Error loading categories")
+}
+
+pub fn get_categories() -> Vec<Category> {
+    db_get_categories(&mut establish_connection())
+}
+
 fn db_get_random_question(conn: &mut PgConnection) -> Option<Question> {
     sql_function!(fn random() -> Integer);
     use crate::schema::questions::dsl::questions;
