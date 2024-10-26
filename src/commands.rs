@@ -596,7 +596,7 @@ pub async fn handle_addquestion_command(
         return messaging::reply_to(
             client,
             &msg,
-            "Your Question or Answer is empty! Use '!addquestion <question> | <answer> | <category_id>' to know which category id to use type !listcategories; ",
+            "Your Question, Answer, or Category Id is empty! Use '!addquestion <question> | <answer> | <category_id>' to know which category id to use type !listcategories; ",
         )
         .await;
     };
