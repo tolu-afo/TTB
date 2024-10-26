@@ -129,6 +129,7 @@ pub async fn handle_commands_command(
         "!github",
         "!botrepo",
         // Duel related commands
+        "!listcategories",
         "!addquestion",
         "!addcategory",
         "!points",
