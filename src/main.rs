@@ -16,7 +16,7 @@ mod models;
 mod schema;
 mod state;
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     dotenv().ok();
     let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
