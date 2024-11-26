@@ -2,10 +2,12 @@
 FROM rust:1.82.0
 
 RUN cargo install diesel_cli
+ARG CACHE_DATE=not_a_date
+
 RUN git clone https://github.com/tolu-afo/TTB.git
 
 WORKDIR /TTB
 
 RUN cargo build --release
 
-CMD ["sh", "./scripts/startup.sh"]
+CMD ["sh", "/TTB/scripts/startup.sh"]
