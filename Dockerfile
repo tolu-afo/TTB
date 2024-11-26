@@ -8,4 +8,4 @@ WORKDIR /TTB
 
 RUN cargo build --release
 
-CMD ["sh", "./startup.sh"]
+CMD ["sh", "./scripts/startup.sh"]
