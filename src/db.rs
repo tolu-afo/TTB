@@ -503,15 +503,15 @@ pub fn _get_question(id: i32) -> Option<Question> {
     _db_get_question(&mut establish_connection(), id)
 }
 
-fn _db_get_questions(conn: &mut PgConnection) -> Vec<Question> {
+fn db_get_questions(conn: &mut PgConnection) -> Vec<Question> {
     use crate::schema::questions::dsl::questions;
     questions
         .load::<Question>(conn)
         .expect("Error loading questions")
 }
 
-pub fn _get_questions() -> Vec<Question> {
-    _db_get_questions(&mut establish_connection())
+pub fn get_questions() -> Vec<Question> {
+    db_get_questions(&mut establish_connection())
 }
 
 fn db_update_times_asked(conn: &mut PgConnection, id: i32, new_times_asked: i32) {

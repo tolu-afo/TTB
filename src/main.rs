@@ -14,6 +14,7 @@ mod db;
 mod messaging;
 mod models;
 mod schema;
+mod seed;
 mod state;
 
 #[tokio::main(flavor = "multi_thread")]
@@ -30,6 +31,8 @@ async fn main() -> Result<()> {
     let token = std::env::var("BOT_OAUTH_TOKEN").expect("BOT_OAUTH_TOKEN must be set.");
     let oauth = std::fmt::format(format_args!("oauth:{}", token));
     let user: String = std::env::var("BOT_USERNAME").expect("BOT_USERNAME must be set.");
+
+    seed::seed_initial_data();
 
     let mut client =
         match get_client(broadcaster_id, client_secret, client_id, token, oauth, user).await {
