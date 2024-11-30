@@ -10,6 +10,8 @@ use crate::models::{
     NewDuel, NewLurker, NewQuestion, Question,
 };
 
+use crate::chatter::on_new_chatter;
+
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -94,20 +96,25 @@ fn update_username(conn: &mut PgConnection, chatter_id: i32, new_username: &str)
         .expect("Wrong Chatter ID");
 }
 
-pub fn record_user_presence(twitch_id: &str, username: &str) -> Chatter {
+pub async fn record_user_presence(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) -> Chatter {
     let conn = &mut establish_connection();
+
+    let twitch_id = msg.sender().id();
+    let username = msg.sender().name();
 
     match db_get_chatter(conn, twitch_id) {
         Some(chatter) => {
             info!("Chatter found for {}", chatter.username);
             update_last_seen(conn, chatter.id);
             if chatter.username != username {
-                update_username(conn, chatter.id, username);
+                update_username(conn, chatter.id, &username);
             }
             chatter
         }
         None => {
-            let chatter = create_chatter(conn, twitch_id, username);
+            // greet new chatter and give 1000 points
+            let chatter = create_chatter(conn, twitch_id, &username);
+            on_new_chatter(client, msg).await;
             info!("Chatter created for twitch user {}", chatter.username);
             chatter
         }

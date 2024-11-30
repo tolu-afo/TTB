@@ -1,0 +1,25 @@
+services:
+  bot:
+    build: 
+      context: .
+      dockerfile: local.Dockerfile
+    env_file: .env
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17
+    env_file: .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ttb_db -U ttb_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  postgres_data:
+networks:
+  default:
+    driver: bridge

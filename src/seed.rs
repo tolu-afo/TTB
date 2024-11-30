@@ -1,6 +1,6 @@
 // seed category and question data into database if not exists already
 use crate::{
-    db::{create_category, create_question, get_categories, get_questions},
+    db::{self, create_category, create_question, get_categories, get_questions},
     schema::categories,
 };
 use dotenv::dotenv;
@@ -128,12 +128,19 @@ pub fn seed_initial_data() -> () {
     // if they do, do not seed
 
     let categories = get_categories();
+    dbg!(&categories);
     if categories.len() == 0 {
+        println!("Seeding categories");
         seed_categories();
+    } else {
+        println!("Categories already seeded!");
     }
 
     let questions = get_questions();
     if questions.len() == 0 {
+        println!("Seeding questions");
         seed_questions();
+    } else {
+        println!("Questions already seeded!");
     }
 }

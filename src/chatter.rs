@@ -84,6 +84,20 @@ pub fn unlurk(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) -> () {
     );
 }
 
+pub async fn on_new_chatter(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) -> () {
+    // greet new chatter and give 1000 points
+
+    let twitch_id = msg.sender().id();
+    let twitch_name = msg.sender().name();
+
+    add_points(twitch_id, 1000);
+    let _ = messaging::reply_to(
+        client,
+        msg,
+        &format!("Welcome, {}! You have been given 1000 points, to gamble and duel with, type !commands to see what you can do.", twitch_name),
+    ).await;
+}
+
 pub fn add_points(twitch_id: &str, points: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {

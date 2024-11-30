@@ -28,7 +28,7 @@ pub async fn on_msg(
 ) -> anyhow::Result<()> {
     println!("{}: {}", msg.sender().name(), msg.text());
     // dbg!(&msg);
-    db::record_user_presence(msg.sender().id(), &msg.sender().name());
+    db::record_user_presence(client, msg).await;
     add_points(msg.sender().id(), 5);
 
     unlurk(client, msg);
