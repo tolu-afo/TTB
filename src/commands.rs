@@ -303,6 +303,10 @@ pub async fn handle_duel_command(
         None => "100",
     };
 
+    if challenger_chatter.points < 0 {
+        return messaging::reply_to(client, &msg, "You are in the Shadow Realm (coming soon), and thus you can not duel! Chat to climb back into the light").await;
+    }
+
     let points: i32 = match points.parse() {
         Result::Ok(p) => match p {
             p if p < 0 => {
@@ -691,6 +695,10 @@ pub async fn handle_gamble_command(
         }
     };
 
+    if chatter.points < 0 {
+        return messaging::reply_to(client, &msg, "You are in the Shadow Realm (coming soon), and thus you can not duel! Chat to climb back into the light").await;
+    }
+
     if chatter.points < wager {
         return messaging::reply_to(
             client,
@@ -698,6 +706,10 @@ pub async fn handle_gamble_command(
             "You don't have enough points to wager that much!",
         )
         .await;
+    }
+
+    if wager <= 0 {
+        return messaging::reply_to(client, msg, "You can't gamble with negatives silly!").await;
     }
 
     fn dice_roll() -> i32 {
