@@ -907,7 +907,7 @@ pub async fn handle_setpoints_command(
                 return messaging::reply_to(
                     client,
                     msg,
-                    "Format is incorrect! try !setpoints @<username> <points>",
+                    "Format is incorrect! try !gift @<username> <points>",
                 )
                 .await;
             }
@@ -941,4 +941,78 @@ pub async fn handle_setpoints_command(
     }
 
     return messaging::reply_to(client, msg, "You aren't allowed to set points").await;
+}
+
+pub async fn handle_gift_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // set a chatters points
+    // format: !setpoints @<chatter_name> <new_point_value>
+
+    let gifter = match db::get_chatter(msg.sender().id()) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::reply_to(client, msg, "Something went wrong! Try Again!").await;
+        }
+    };
+
+    let mut cmd_iter = msg.text().split(' ');
+    cmd_iter.next();
+    let chatter_name = match cmd_iter.next() {
+        Some(name) => match name.chars().nth(0) {
+            Some('@') => &name[1..],
+            _ => name,
+        },
+        None => {
+            return messaging::reply_to(
+                client,
+                msg,
+                "Format is incorrect! try !gift @<username> <points>",
+            )
+            .await;
+        }
+    };
+
+    let chatter = match (db::get_chatter_by_username(&chatter_name)) {
+        Some(user) => user,
+        None => {
+            return messaging::reply_to(client, msg, "No chatter with that name!").await;
+        }
+    };
+
+    let points = match cmd_iter.next() {
+        Some(chal) => chal,
+        None => "100",
+    };
+
+    let new_points: i32 = match points.parse() {
+        Result::Ok(p) => match p {
+            p if p < 0 => {
+                return messaging::reply_to(client, msg, "provide a positive value").await;
+            }
+            _ => p,
+        },
+        Result::Err(_) => {
+            return messaging::reply_to(client, msg, "Provide a valid number").await;
+        }
+    };
+
+    if gifter.points < new_points {
+        return messaging::reply_to(
+            client,
+            msg,
+            "You don't have enough points to gift that many!",
+        )
+        .await;
+    }
+    chatter::add_points(&chatter.twitch_id, new_points);
+    chatter::subtract_points(&gifter.twitch_id, new_points);
+
+    let reply_msg = format!(
+        "@{} gifted {} points to @{}",
+        gifter.username, new_points, chatter.username
+    );
+
+    return messaging::send_msg(client, msg, &reply_msg).await;
 }
