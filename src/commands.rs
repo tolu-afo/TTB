@@ -959,7 +959,7 @@ pub async fn handle_gift_command(
 
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
-    let chatter_name = match cmd_iter.next() {
+    let recipient_name = match cmd_iter.next() {
         Some(name) => match name.chars().nth(0) {
             Some('@') => &name[1..],
             _ => name,
@@ -974,7 +974,7 @@ pub async fn handle_gift_command(
         }
     };
 
-    let chatter = match (db::get_chatter_by_username(&chatter_name)) {
+    let recipient = match db::get_chatter_by_username(&recipient_name) {
         Some(user) => user,
         None => {
             return messaging::reply_to(client, msg, "No chatter with that name!").await;
@@ -982,7 +982,7 @@ pub async fn handle_gift_command(
     };
 
     let points = match cmd_iter.next() {
-        Some(chal) => chal,
+        Some(pts) => pts,
         None => "100",
     };
 
@@ -1006,12 +1006,12 @@ pub async fn handle_gift_command(
         )
         .await;
     }
-    chatter::add_points(&chatter.twitch_id, new_points);
+    chatter::add_points(&recipient.twitch_id, new_points);
     chatter::subtract_points(&gifter.twitch_id, new_points);
 
     let reply_msg = format!(
         "@{} gifted {} points to @{}",
-        gifter.username, new_points, chatter.username
+        gifter.username, new_points, recipient.username
     );
 
     return messaging::send_msg(client, msg, &reply_msg).await;
