@@ -56,7 +56,9 @@ pub async fn on_msg(
         Some("!repeat") => commands::handle_repeat_command(client, msg).await,
         Some("!top3") => commands::handle_top_duelists_command(client, msg).await,
         Some("!ranking") => commands::handle_ranking_command(client, msg).await,
-        Some("!hackathon") => commands::handle_hackathon_command(client, msg).await,
+        // Some("!hackathon") => commands::handle_hackathon_command(client, msg).await,
+        Some("!setpoints") => commands::handle_setpoints_command(client, msg).await,
+
         _ => Ok(()),
     }
 }

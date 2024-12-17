@@ -886,3 +886,59 @@ pub async fn handle_addcategory_command(
         }
     }
 }
+
+pub async fn handle_setpoints_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // set a chatters points
+    let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
+    if msg.sender().id() == broadcaster_id {
+        // format: !setpoints @<chatter_name> <new_point_value>
+
+        let mut cmd_iter = msg.text().split(' ');
+        cmd_iter.next();
+        let chatter_name = match (cmd_iter.next()) {
+            Some(name) => match name.chars().nth(0) {
+                Some('@') => &name[1..],
+                _ => name,
+            },
+            None => {
+                return messaging::reply_to(
+                    client,
+                    msg,
+                    "Format is incorrect! try !setpoints @<username> <points>",
+                )
+                .await;
+            }
+        };
+        let chatter = match (db::get_chatter_by_username(&chatter_name)) {
+            Some(user) => user,
+            None => {
+                return messaging::reply_to(client, msg, "No chatter with that name!").await;
+            }
+        };
+
+        let points = match cmd_iter.next() {
+            Some(chal) => chal,
+            None => "100",
+        };
+
+        let new_points: i32 = match points.parse() {
+            Result::Ok(p) => match p {
+                p if p < 0 => {
+                    return messaging::reply_to(client, msg, "provide a positive value").await;
+                }
+                _ => p,
+            },
+            Result::Err(_) => {
+                return messaging::reply_to(client, msg, "Provide a valid number").await;
+            }
+        };
+        db::update_points(&chatter.twitch_id, new_points);
+
+        return messaging::reply_to(client, msg, "Points updated!").await;
+    }
+
+    return messaging::reply_to(client, msg, "You aren't allowed to set points").await;
+}
