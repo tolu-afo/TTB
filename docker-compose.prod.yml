@@ -1,8 +1,6 @@
 services:
   bot:
-    build: 
-      context: .
-      dockerfile: production.Dockerfile
+    image: ttb-bot:latest
     env_file: .env
     restart: always
     depends_on:
