@@ -584,11 +584,20 @@ pub async fn handle_addquestion_command(
         return messaging::reply_to(
             client,
             &msg,
-            "Invalid format! Use !addquestion <question> | <answer>",
+            "Invalid format! Use !addquestion <question> | <answer> | <category_id> type !listcategories to see category ids",
         )
         .await;
     }
     let question_answer: Vec<&str> = response.split('|').collect();
+
+    if question_answer.len() < 3 {
+        return messaging::reply_to(
+        client,
+        &msg,
+        "Something is missing! Use !addquestion <question> | <answer> | <category_id> type !listcategories to see category ids",
+    )
+    .await;
+    }
 
     // strip leading and trailing whitespaces
     let question = question_answer[0].trim();
@@ -695,6 +704,10 @@ pub async fn handle_gamble_command(
         }
     };
 
+    if wager <= 0 {
+        return messaging::reply_to(client, msg, "You can't gamble with negatives silly!").await;
+    }
+
     if chatter.points < 0 {
         return messaging::reply_to(client, &msg, "You are in the Shadow Realm (coming soon), and thus you can not duel! Chat to climb back into the light").await;
     }
@@ -706,10 +719,6 @@ pub async fn handle_gamble_command(
             "You don't have enough points to wager that much!",
         )
         .await;
-    }
-
-    if wager <= 0 {
-        return messaging::reply_to(client, msg, "You can't gamble with negatives silly!").await;
     }
 
     fn dice_roll() -> i32 {
