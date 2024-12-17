@@ -691,13 +691,17 @@ pub async fn handle_gamble_command(
         }
     };
 
-    if chatter.points < wager {
+    if chatter.points < wager || chatter.points < 0 {
         return messaging::reply_to(
             client,
             msg,
             "You don't have enough points to wager that much!",
         )
         .await;
+    }
+
+    if wager <= 0 {
+        return messaging::reply_to(client, msg, "You can't gamble with negatives silly!").await;
     }
 
     fn dice_roll() -> i32 {
