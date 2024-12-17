@@ -139,6 +139,7 @@ pub async fn handle_commands_command(
         "!kda",
         "!ranking",
         "!top3",
+        "!gift",
     ];
     messaging::reply_to(
         client,
