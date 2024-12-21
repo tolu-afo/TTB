@@ -743,10 +743,7 @@ pub async fn handle_gamble_command(
         12 => {
             let points = wager * 8;
             chatter::add_points(&msg.sender().id(), points);
-            format!(
-                "You rolled a {} and a {}! You win {} points!",
-                roll1, roll2, points
-            )
+            format!("Double Sixes! You win {} points!", roll1, roll2, points)
         }
         11 => {
             let points = wager * 4;
