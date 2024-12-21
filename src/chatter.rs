@@ -101,7 +101,11 @@ pub async fn on_new_chatter(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) ->
 pub fn add_points(twitch_id: &str, points: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
-            let new_points = chatter.points + points;
+            let new_points = if (chatter.points + points) < -1000 {
+                -1000
+            } else {
+                chatter.points + points
+            };
             update_points(twitch_id, new_points)
         }
         None => info!("No Chatter with id: {} to update!", twitch_id),
@@ -111,7 +115,11 @@ pub fn add_points(twitch_id: &str, points: i32) -> () {
 pub fn subtract_points(twitch_id: &str, points: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
-            let new_points = chatter.points - points;
+            let new_points = if (chatter.points - points) < 1000 {
+                -1000
+            } else {
+                chatter.points - points
+            };
             update_points(twitch_id, new_points)
         }
         None => info!("No Chatter with id: {} to update!", twitch_id),

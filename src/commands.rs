@@ -676,7 +676,19 @@ pub async fn handle_gamble_command(
 
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
+
+    let chatter = match db::get_chatter(&msg.sender().id()) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::reply_to(client, msg, "Chatter not found!").await;
+        }
+    };
+
     let wager = match cmd_iter.next() {
+        Some(w) if w.to_lowercase() == "all" => {
+            let _ = messaging::reply_to(client, msg, "You're Going All In!!!").await;
+            chatter.points
+        }
         Some(w) => match w.parse::<i32>() {
             Ok(w) => w,
             Err(_) => {
@@ -695,13 +707,6 @@ pub async fn handle_gamble_command(
                 "You need to provide a wager! Format: '!gamble <points>'",
             )
             .await;
-        }
-    };
-
-    let chatter = match db::get_chatter(&msg.sender().id()) {
-        Some(chatter) => chatter,
-        None => {
-            return messaging::reply_to(client, msg, "Chatter not found!").await;
         }
     };
 
@@ -736,6 +741,14 @@ pub async fn handle_gamble_command(
 
     let reply = match sum {
         12 => {
+            let points = wager * 8;
+            chatter::add_points(&msg.sender().id(), points);
+            format!(
+                "You rolled a {} and a {}! You win {} points!",
+                roll1, roll2, points
+            )
+        }
+        11 => {
             let points = wager * 4;
             chatter::add_points(&msg.sender().id(), points);
             format!(
@@ -743,7 +756,7 @@ pub async fn handle_gamble_command(
                 roll1, roll2, points
             )
         }
-        11 | 10 | 9 => {
+        10 | 9 => {
             let points = wager * 2;
             chatter::add_points(&msg.sender().id(), points);
             format!(
@@ -759,12 +772,23 @@ pub async fn handle_gamble_command(
                 roll1, roll2, points
             )
         }
-        2 => {
-            let points = wager * 8;
-            chatter::subtract_points(&msg.sender().id(), points);
-            format!("Snake Eyes! You lose {} points!", points)
-        }
         7 => {
+            let points = wager;
+            chatter::subtract_points(&msg.sender().id(), points);
+            format!(
+                "You rolled a {} and a {}! You lose {} points!",
+                roll1, roll2, points
+            )
+        }
+        6 | 5 | 4 => {
+            let points = wager * 2;
+            chatter::subtract_points(&msg.sender().id(), points);
+            format!(
+                "You rolled a {} and a {}! You lose {} points!",
+                roll1, roll2, points
+            )
+        }
+        3 => {
             let points = wager * 4;
             chatter::subtract_points(&msg.sender().id(), points);
             format!(
@@ -772,13 +796,10 @@ pub async fn handle_gamble_command(
                 roll1, roll2, points
             )
         }
-        6 | 5 | 4 | 3 => {
-            let points = wager;
+        2 => {
+            let points = wager * 8;
             chatter::subtract_points(&msg.sender().id(), points);
-            format!(
-                "You rolled a {} and a {}! You lose {} points!",
-                roll1, roll2, points
-            )
+            format!("Snake Eyes! You lose {} points!", points)
         }
         _ => format!(
             "You rolled a {} and a {}! No points won or lost!",
