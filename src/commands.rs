@@ -450,6 +450,15 @@ pub async fn handle_answer_command(
               duel.challenger, duel.challenger_guesses-1)
             };
             messaging::reply_to(client, &msg, reply.as_str()).await?;
+
+            if duel.challenger_guesses - 1 <= 0 && duel.challenged_guesses <= 0 {
+                duel.complete_duel();
+                let reply = format!(
+                  "Both players have exhausted their guesses! The duel is over! Both @{} and @{} lose {} points! The correct answer was {}",
+                  duel.challenger, duel.challenged, duel.points / 2, duel.answer.as_ref().unwrap()
+              );
+                messaging::reply_to(client, &msg, reply.as_str()).await?;
+            }
         } else if responder == duel.challenged {
             if duel.challenged_guesses > 0 {
                 duel.decrement_challenged_guesses()
@@ -463,15 +472,15 @@ pub async fn handle_answer_command(
                )
             };
             messaging::reply_to(client, &msg, reply.as_str()).await?;
-        }
 
-        if duel.challenger_guesses - 1 <= 0 && duel.challenged_guesses - 1 <= 0 {
-            duel.complete_duel();
-            let reply = format!(
-                "Both players have exhausted their guesses! The duel is over! Both @{} and @{} lose {} points! The correct answer was {}",
-                duel.challenger, duel.challenged, duel.points / 2, duel.answer.as_ref().unwrap()
-            );
-            messaging::reply_to(client, &msg, reply.as_str()).await?;
+            if duel.challenger_guesses <= 0 && duel.challenged_guesses - 1 <= 0 {
+                duel.complete_duel();
+                let reply = format!(
+                  "Both players have exhausted their guesses! The duel is over! Both @{} and @{} lose {} points! The correct answer was {}",
+                  duel.challenger, duel.challenged, duel.points / 2, duel.answer.as_ref().unwrap()
+              );
+                messaging::reply_to(client, &msg, reply.as_str()).await?;
+            }
         }
     }
     Ok(())

@@ -115,7 +115,7 @@ pub fn add_points(twitch_id: &str, points: i32) -> () {
 pub fn subtract_points(twitch_id: &str, points: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
-            let new_points = if (chatter.points - points) < 1000 {
+            let new_points = if (chatter.points - points) < -1000 {
                 -1000
             } else {
                 chatter.points - points
