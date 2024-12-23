@@ -73,7 +73,7 @@ pub async fn on_msg(
         Some("!stockhistory") => Ok(()),
         // Reach
         Some("!call") => Ok(()),
-        Some("!short") => Ok(()),
+        Some("!put") => Ok(()),
         _ => Ok(()),
     }
 }
