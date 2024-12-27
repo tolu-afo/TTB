@@ -185,8 +185,8 @@ pub async fn handle_accept_command(
         }
     };
     let key = format!("{}{}", challenger, challenged);
-    let duel = match bot_state.duel_cache.get_mut(&key.to_lowercase()) {
-        Some(d) => {
+    let mut duel = match bot_state.get_duel(&key.to_lowercase()) {
+        Some(mut d) => {
             d.accept_duel();
             d
         }
@@ -195,15 +195,6 @@ pub async fn handle_accept_command(
         }
     };
 
-    let _ = messaging::send_msg(
-        client,
-        &msg,
-        &format!(
-            "@{} @{} Accepted! Once you read the question; type '!answer <your_answer>', or '!a <your_answer>' to answer!",
-            challenger, challenged
-        ),
-    )
-    .await;
     duel.ask_question(client, &msg).await;
 
     return Ok(());
@@ -283,7 +274,7 @@ pub async fn handle_duel_command(
             };
             if stale {
                 match db::get_duel(duel.duel_id) {
-                    Some(mut d) => d.complete_duel(),
+                    Some(mut d) => d.complete_duel(bot_state),
                     None => (),
                 }
             } else {
@@ -369,6 +360,7 @@ pub async fn handle_duel_command(
 pub async fn handle_answer_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
+    bot_state: &mut State,
 ) -> anyhow::Result<(), anyhow::Error> {
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
@@ -452,7 +444,7 @@ pub async fn handle_answer_command(
             messaging::reply_to(client, &msg, reply.as_str()).await?;
 
             if duel.challenger_guesses - 1 <= 0 && duel.challenged_guesses <= 0 {
-                duel.complete_duel();
+                duel.complete_duel(bot_state);
                 let reply = format!(
                   "Both players have exhausted their guesses! The duel is over! Both @{} and @{} lose {} points! The correct answer was {}",
                   duel.challenger, duel.challenged, duel.points / 2, duel.answer.as_ref().unwrap()
@@ -474,7 +466,7 @@ pub async fn handle_answer_command(
             messaging::reply_to(client, &msg, reply.as_str()).await?;
 
             if duel.challenger_guesses <= 0 && duel.challenged_guesses - 1 <= 0 {
-                duel.complete_duel();
+                duel.complete_duel(bot_state);
                 let reply = format!(
                   "Both players have exhausted their guesses! The duel is over! Both @{} and @{} lose {} points! The correct answer was {}",
                   duel.challenger, duel.challenged, duel.points / 2, duel.answer.as_ref().unwrap()

@@ -97,7 +97,7 @@ pub async fn on_new_chatter(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) ->
         &format!("Welcome, {}! You have been given 1000 points, to gamble and duel with, type !commands to see what you can do.", twitch_name),
     ).await;
 }
-
+// TODO: Add a saturaton operation for negative overflows crates: ranged_integers, constrained_int, deranged (deranged might be the best one?)
 pub fn add_points(twitch_id: &str, points: i32) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
