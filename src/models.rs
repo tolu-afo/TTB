@@ -3,6 +3,7 @@ use crate::messaging::send_msg;
 use crate::schema::categories;
 use crate::schema::lurkers;
 use crate::schema::questions;
+use crate::state::State;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
@@ -75,7 +76,7 @@ impl Duel {
         };
 
         let question_announcement = format!(
-            "@{} @{} The Category is: {}; your question is: {}",
+            "@{} @{} - format: '!a <answer>' - {}: {}",
             self.challenger,
             self.challenged,
             question.display_question_kind(),
@@ -139,7 +140,8 @@ impl Duel {
         db::decrement_guesses(self.id, false);
     }
 
-    pub fn complete_duel(&mut self) -> () {
+    pub fn complete_duel(&mut self, bot_state: &mut State) -> () {
+        bot_state.clear_duel(self);
         db::complete_duel(self.id, "tie", "completed");
         db::destroy_accepted_duel(self.id);
     }
