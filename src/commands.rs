@@ -12,6 +12,8 @@ use crate::models;
 use crate::models::Question;
 use crate::state::State;
 
+// pub mod stock;
+
 pub async fn handle_yo_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
@@ -139,7 +141,6 @@ pub async fn handle_commands_command(
         "!kda",
         "!ranking",
         "!top3",
-        "!gift",
     ];
     messaging::reply_to(
         client,
@@ -294,10 +295,6 @@ pub async fn handle_duel_command(
         Some(chal) => chal,
         None => "100",
     };
-
-    if challenger_chatter.points < 0 {
-        return messaging::reply_to(client, &msg, "You are in the Shadow Realm (coming soon), and thus you can not duel! Chat to climb back into the light").await;
-    }
 
     let points: i32 = match points.parse() {
         Result::Ok(p) => match p {
@@ -464,15 +461,15 @@ pub async fn handle_answer_command(
                )
             };
             messaging::reply_to(client, &msg, reply.as_str()).await?;
+        }
 
-            if duel.challenger_guesses <= 0 && duel.challenged_guesses - 1 <= 0 {
-                duel.complete_duel(bot_state);
-                let reply = format!(
+        if duel.challenger_guesses <= 0 && duel.challenged_guesses - 1 <= 0 {
+            duel.complete_duel(bot_state);
+            let reply = format!(
                   "Both players have exhausted their guesses! The duel is over! Both @{} and @{} lose {} points! The correct answer was {}",
                   duel.challenger, duel.challenged, duel.points / 2, duel.answer.as_ref().unwrap()
               );
-                messaging::reply_to(client, &msg, reply.as_str()).await?;
-            }
+            messaging::reply_to(client, &msg, reply.as_str()).await?;
         }
     }
     Ok(())
@@ -586,20 +583,11 @@ pub async fn handle_addquestion_command(
         return messaging::reply_to(
             client,
             &msg,
-            "Invalid format! Use !addquestion <question> | <answer> | <category_id> type !listcategories to see category ids",
+            "Invalid format! Use !addquestion <question> | <answer>",
         )
         .await;
     }
     let question_answer: Vec<&str> = response.split('|').collect();
-
-    if question_answer.len() < 3 {
-        return messaging::reply_to(
-        client,
-        &msg,
-        "Something is missing! Use !addquestion <question> | <answer> | <category_id> type !listcategories to see category ids",
-    )
-    .await;
-    }
 
     // strip leading and trailing whitespaces
     let question = question_answer[0].trim();
@@ -677,19 +665,7 @@ pub async fn handle_gamble_command(
 
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
-
-    let chatter = match db::get_chatter(&msg.sender().id()) {
-        Some(chatter) => chatter,
-        None => {
-            return messaging::reply_to(client, msg, "Chatter not found!").await;
-        }
-    };
-
     let wager = match cmd_iter.next() {
-        Some(w) if w.to_lowercase() == "all" => {
-            let _ = messaging::reply_to(client, msg, "You're Going All In!!!").await;
-            chatter.points
-        }
         Some(w) => match w.parse::<i32>() {
             Ok(w) => w,
             Err(_) => {
@@ -711,13 +687,12 @@ pub async fn handle_gamble_command(
         }
     };
 
-    if wager <= 0 {
-        return messaging::reply_to(client, msg, "You can't gamble with negatives silly!").await;
-    }
-
-    if chatter.points < 0 {
-        return messaging::reply_to(client, &msg, "You are in the Shadow Realm (coming soon), and thus you can not duel! Chat to climb back into the light").await;
-    }
+    let chatter = match db::get_chatter(&msg.sender().id()) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::reply_to(client, msg, "Chatter not found!").await;
+        }
+    };
 
     if chatter.points < wager {
         return messaging::reply_to(
@@ -742,11 +717,6 @@ pub async fn handle_gamble_command(
 
     let reply = match sum {
         12 => {
-            let points = wager * 8;
-            chatter::add_points(&msg.sender().id(), points);
-            format!("Double Sixes! You win {} points!", points)
-        }
-        11 => {
             let points = wager * 4;
             chatter::add_points(&msg.sender().id(), points);
             format!(
@@ -754,7 +724,7 @@ pub async fn handle_gamble_command(
                 roll1, roll2, points
             )
         }
-        10 | 9 => {
+        11 | 10 | 9 => {
             let points = wager * 2;
             chatter::add_points(&msg.sender().id(), points);
             format!(
@@ -770,34 +740,29 @@ pub async fn handle_gamble_command(
                 roll1, roll2, points
             )
         }
-        7 => {
+        2 => {
             let points = wager;
             chatter::subtract_points(&msg.sender().id(), points);
             format!(
-                "You rolled a {} and a {}! You lose {} points!",
-                roll1, roll2, points
+                "Snake Eyes! You lose {} points! They've been added to the losers pool",
+                points
             )
         }
-        6 | 5 | 4 => {
-            let points = wager * 2;
+        7 => {
+            let points = wager / 4;
             chatter::subtract_points(&msg.sender().id(), points);
             format!(
-                "You rolled a {} and a {}! You lose {} points!",
+                "You rolled a {} and a {}! You lose {} points! They've been added to the losers pool",
                 roll1, roll2, points
             )
         }
-        3 => {
-            let points = wager * 4;
+        6 | 5 | 4 | 3 => {
+            let points = wager / 2;
             chatter::subtract_points(&msg.sender().id(), points);
             format!(
-                "You rolled a {} and a {}! You lose {} points!",
+                "You rolled a {} and a {}! You lose {} points! They've been added to the losers pool",
                 roll1, roll2, points
             )
-        }
-        2 => {
-            let points = wager * 8;
-            chatter::subtract_points(&msg.sender().id(), points);
-            format!("Snake Eyes! You lose {} points!", points)
         }
         _ => format!(
             "You rolled a {} and a {}! No points won or lost!",
@@ -905,134 +870,4 @@ pub async fn handle_addcategory_command(
             return messaging::reply_to(client, msg, "Category Added!").await;
         }
     }
-}
-
-pub async fn handle_setpoints_command(
-    client: &mut tmi::Client,
-    msg: &tmi::Privmsg<'_>,
-) -> anyhow::Result<(), anyhow::Error> {
-    // set a chatters points
-    let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
-    if msg.sender().id() == broadcaster_id {
-        // format: !setpoints @<chatter_name> <new_point_value>
-
-        let mut cmd_iter = msg.text().split(' ');
-        cmd_iter.next();
-        let chatter_name = match (cmd_iter.next()) {
-            Some(name) => match name.chars().nth(0) {
-                Some('@') => &name[1..],
-                _ => name,
-            },
-            None => {
-                return messaging::reply_to(
-                    client,
-                    msg,
-                    "Format is incorrect! try !gift @<username> <points>",
-                )
-                .await;
-            }
-        };
-        let chatter = match (db::get_chatter_by_username(&chatter_name)) {
-            Some(user) => user,
-            None => {
-                return messaging::reply_to(client, msg, "No chatter with that name!").await;
-            }
-        };
-
-        let points = match cmd_iter.next() {
-            Some(chal) => chal,
-            None => "100",
-        };
-
-        let new_points: i32 = match points.parse() {
-            Result::Ok(p) => match p {
-                p if p < 0 => {
-                    return messaging::reply_to(client, msg, "provide a positive value").await;
-                }
-                _ => p,
-            },
-            Result::Err(_) => {
-                return messaging::reply_to(client, msg, "Provide a valid number").await;
-            }
-        };
-        db::update_points(&chatter.twitch_id, new_points);
-
-        return messaging::reply_to(client, msg, "Points updated!").await;
-    }
-
-    return messaging::reply_to(client, msg, "You aren't allowed to set points").await;
-}
-
-pub async fn handle_gift_command(
-    client: &mut tmi::Client,
-    msg: &tmi::Privmsg<'_>,
-) -> anyhow::Result<(), anyhow::Error> {
-    // set a chatters points
-    // format: !setpoints @<chatter_name> <new_point_value>
-
-    let gifter = match db::get_chatter(msg.sender().id()) {
-        Some(chatter) => chatter,
-        None => {
-            return messaging::reply_to(client, msg, "Something went wrong! Try Again!").await;
-        }
-    };
-
-    let mut cmd_iter = msg.text().split(' ');
-    cmd_iter.next();
-    let recipient_name = match cmd_iter.next() {
-        Some(name) => match name.chars().nth(0) {
-            Some('@') => &name[1..],
-            _ => name,
-        },
-        None => {
-            return messaging::reply_to(
-                client,
-                msg,
-                "Format is incorrect! try !gift @<username> <points>",
-            )
-            .await;
-        }
-    };
-
-    let recipient = match db::get_chatter_by_username(&recipient_name) {
-        Some(user) => user,
-        None => {
-            return messaging::reply_to(client, msg, "No chatter with that name!").await;
-        }
-    };
-
-    let points = match cmd_iter.next() {
-        Some(pts) => pts,
-        None => "100",
-    };
-
-    let new_points: i32 = match points.parse() {
-        Result::Ok(p) => match p {
-            p if p < 0 => {
-                return messaging::reply_to(client, msg, "provide a positive value").await;
-            }
-            _ => p,
-        },
-        Result::Err(_) => {
-            return messaging::reply_to(client, msg, "Provide a valid number").await;
-        }
-    };
-
-    if gifter.points < new_points {
-        return messaging::reply_to(
-            client,
-            msg,
-            "You don't have enough points to gift that many!",
-        )
-        .await;
-    }
-    chatter::add_points(&recipient.twitch_id, new_points);
-    chatter::subtract_points(&gifter.twitch_id, new_points);
-
-    let reply_msg = format!(
-        "@{} gifted {} points to @{}",
-        gifter.username, new_points, recipient.username
-    );
-
-    return messaging::send_msg(client, msg, &reply_msg).await;
 }

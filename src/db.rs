@@ -6,8 +6,8 @@ use dotenv::dotenv;
 use log::info;
 
 use crate::models::{
-    AcceptedDuel, Category, Chatter, Duel, Lurker, NewAcceptedDuel, NewCategory, NewChatter,
-    NewDuel, NewLurker, NewQuestion, Question,
+    AcceptedDuel, Category, Chatter, Duel, LosersPool, Lurker, NewAcceptedDuel, NewCategory,
+    NewChatter, NewDuel, NewLurker, NewPool, NewQuestion, Question,
 };
 
 use crate::chatter::on_new_chatter;
@@ -655,4 +655,98 @@ fn db_get_random_chatter(curr_chatter: &Chatter) -> Chatter {
 
 pub fn get_random_chatter(curr_chatter: &Chatter) -> Chatter {
     db_get_random_chatter(curr_chatter)
+}
+
+pub fn create_new_pool() -> i32 {
+    let conn = &mut establish_connection();
+    use crate::schema::losers_pool::dsl::losers_pool;
+
+    let pool = NewPool { amount: 100 };
+
+    let new_pool: LosersPool = diesel::insert_into(losers_pool)
+        .values(pool)
+        .returning(LosersPool::as_returning())
+        .get_result(conn)
+        .expect("Error creating new pool");
+    new_pool.id
+}
+
+pub fn update_pool_points(id: i32, points: i32) {
+    let conn = &mut establish_connection();
+    use crate::schema::losers_pool::dsl::{amount, id as db_id, losers_pool};
+
+    let pool = losers_pool
+        .filter(db_id.eq(id))
+        .select(LosersPool::as_select())
+        .first::<LosersPool>(conn)
+        .optional();
+
+    match pool.unwrap() {
+        Some(p) => {
+            let new_points = p.amount + points;
+            diesel::update(losers_pool)
+                .filter(db_id.eq(id))
+                .set(amount.eq(new_points))
+                .execute(conn)
+                .expect("error updating pool");
+        }
+        None => {
+            println!("failed to update points, pool doesn't seem to exist");
+        }
+    }
+}
+
+pub fn get_pool(id: i32) -> Option<LosersPool> {
+    let conn = &mut establish_connection();
+    use crate::schema::losers_pool::dsl::{id as db_id, losers_pool};
+
+    let pool = losers_pool
+        .filter(db_id.eq(id))
+        .select(LosersPool::as_select())
+        .first::<LosersPool>(conn)
+        .optional();
+    pool.unwrap_or_else(|e| {
+        println!("didn't get pool back");
+        None
+    })
+}
+
+pub fn update_pool_winner(id: i32, winner_id: i32) {
+    let conn = &mut establish_connection();
+    use crate::schema::losers_pool::dsl::{id as db_id, losers_pool, winner};
+
+    let pool = losers_pool
+        .filter(db_id.eq(id))
+        .select(LosersPool::as_select())
+        .first::<LosersPool>(conn)
+        .optional();
+
+    match pool.unwrap() {
+        Some(p) => {
+            diesel::update(losers_pool)
+                .filter(db_id.eq(id))
+                .set(winner.eq(winner))
+                .execute(conn)
+                .expect("error updating pool");
+        }
+        None => {
+            println!("failed to update points, pool doesn't seem to exist");
+        }
+    };
+}
+
+pub fn get_current_pool() -> Option<LosersPool> {
+    let conn = &mut establish_connection();
+    use crate::schema::losers_pool::dsl::{created_at, losers_pool};
+
+    let pool = losers_pool
+        .order(created_at.desc())
+        .select(LosersPool::as_select())
+        .first::<LosersPool>(conn)
+        .optional();
+
+    pool.unwrap_or_else(|p| {
+        println!("failed to find pool");
+        None
+    })
 }

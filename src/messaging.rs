@@ -36,6 +36,7 @@ pub async fn on_msg(
     match msg.text().split_ascii_whitespace().next() {
         Some("!points") => commands::handle_points_command(client, msg).await,
         Some("!commands") => commands::handle_commands_command(client, msg).await,
+        Some("!help") => commands::handle_commands_command(client, msg).await,
         Some("!gamble") => commands::handle_gamble_command(client, msg).await,
         Some("!github") => commands::handle_github_command(client, msg).await,
         Some("!botrepo") => commands::handle_botrepo_command(client, msg).await,
