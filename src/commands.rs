@@ -109,7 +109,7 @@ pub async fn handle_points_command(
 
     let points = get_points(msg.sender().id());
 
-    let reply = format!("@{}, you have {} point(s)!", msg.sender().name(), points);
+    let reply = format!("You have {} point(s)!", msg.sender().name(), points);
     messaging::reply_to(client, msg, &reply).await
 }
 
