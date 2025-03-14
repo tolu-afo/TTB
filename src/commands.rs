@@ -780,14 +780,6 @@ pub async fn handle_contribute_command(
     messaging::reply_to(client, msg, contribute_url).await
 }
 
-pub async fn handle_hackathon_command(
-    client: &mut tmi::Client,
-    msg: &tmi::Privmsg<'_>,
-) -> anyhow::Result<(), anyhow::Error> {
-    let hackathon_url = "Join Our Hackathon! ft. ToluAfo (me), BlaiseLabs, & aholliday90! We are building a DND DungeonMaster bot for twitch streamer collaboration! Click here to learn more! https://discordapp.com/channels/1056759561035464705/1290390127922778174";
-    messaging::reply_to(client, &msg, hackathon_url).await
-}
-
 pub async fn handle_addcategory_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
