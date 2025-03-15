@@ -1,6 +1,7 @@
 pub mod chatter;
 pub mod commands;
 pub mod db;
+pub mod helpers;
 pub mod messaging;
 pub mod models;
 pub mod schema;

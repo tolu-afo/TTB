@@ -57,9 +57,10 @@ pub async fn on_msg(
         Some("!repeat") => commands::handle_repeat_command(client, msg).await,
         Some("!top3") => commands::handle_top_duelists_command(client, msg).await,
         Some("!ranking") => commands::handle_ranking_command(client, msg).await,
-        // TODO: Rebase this branch
-        // Some("!setpoints") => commands::handle_setpoints_command(client, msg).await,
-        // Some("!gift") => commands::handle_gift_command(client, msg).await,
+        Some("!setpoints") => commands::handle_setpoints_command(client, msg).await,
+        Some("!gift") => commands::handle_gift_command(client, msg).await,
+        Some("!pool") => commands::handle_pool_command(client, msg).await,
+        Some("!selectPoolWinner") => commands::handle_pool_draw_command(client, msg).await,
         _ => Ok(()),
     }
 }

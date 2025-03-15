@@ -123,6 +123,24 @@ fn seed_questions() -> () {
     }
 }
 
+fn seed_loser_pool() -> () {
+    // Seed initial loser pool if no pool without a winner exists.
+
+    match db::get_current_pool() {
+        Some(pool) => {
+            // return we found a pool we don't need to create a new one.
+            println!("Yes pool!");
+            return;
+        }
+        None => {
+            // No pool found!!! Make a new pool for the stream.
+            println!("No pool!");
+            db::create_new_pool();
+            return;
+        }
+    }
+}
+
 pub fn seed_initial_data() -> () {
     // check if questions and categories already exist
     // if they do, do not seed
@@ -143,4 +161,6 @@ pub fn seed_initial_data() -> () {
     } else {
         println!("Questions already seeded!");
     }
+
+    seed_loser_pool();
 }

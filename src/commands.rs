@@ -1,16 +1,17 @@
-use anyhow::Result;
-use chrono::TimeZone;
-use rand::Rng;
-
 use crate::chatter;
 use crate::chatter::get_challenge_to_accept;
 use crate::db;
 use crate::db::get_category_by_name;
+use crate::helpers;
 use crate::messaging;
 use crate::messaging::{list_with_title, ItemSeparator};
 use crate::models;
 use crate::models::Question;
 use crate::state::State;
+use anyhow::Result;
+use chrono::TimeZone;
+use rand::Rng;
+use std;
 
 // pub mod stock;
 
@@ -141,6 +142,10 @@ pub async fn handle_commands_command(
         "!kda",
         "!ranking",
         "!top3",
+        "!gift",
+        "!setpoints",
+        "!pool",
+        "!selectPoolWinner",
     ];
     messaging::reply_to(
         client,
@@ -715,6 +720,8 @@ pub async fn handle_gamble_command(
 
     let sum = roll1 + roll2;
 
+    let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
+
     let reply = match sum {
         12 => {
             let points = wager * 4;
@@ -743,6 +750,8 @@ pub async fn handle_gamble_command(
         2 => {
             let points = wager;
             chatter::subtract_points(&msg.sender().id(), points);
+            db::add_pool_points(points / 2);
+            chatter::add_points(&broadcaster_id, points / 2);
             format!(
                 "Snake Eyes! You lose {} points! They've been added to the losers pool",
                 points
@@ -751,6 +760,8 @@ pub async fn handle_gamble_command(
         7 => {
             let points = wager / 4;
             chatter::subtract_points(&msg.sender().id(), points);
+            db::add_pool_points(points / 2);
+            chatter::add_points(&broadcaster_id, points / 2);
             format!(
                 "You rolled a {} and a {}! You lose {} points! They've been added to the losers pool",
                 roll1, roll2, points
@@ -759,6 +770,8 @@ pub async fn handle_gamble_command(
         6 | 5 | 4 | 3 => {
             let points = wager / 2;
             chatter::subtract_points(&msg.sender().id(), points);
+            db::add_pool_points(points / 2);
+            chatter::add_points(&broadcaster_id, points / 2);
             format!(
                 "You rolled a {} and a {}! You lose {} points! They've been added to the losers pool",
                 roll1, roll2, points
@@ -862,4 +875,199 @@ pub async fn handle_addcategory_command(
             return messaging::reply_to(client, msg, "Category Added!").await;
         }
     }
+}
+
+pub async fn handle_setpoints_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // set a chatters points
+    let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
+    if msg.sender().id() == broadcaster_id {
+        // format: !setpoints @<chatter_name> <new_point_value>
+
+        let mut cmd_iter = msg.text().split(' ');
+        cmd_iter.next();
+        let chatter_name = match (cmd_iter.next()) {
+            Some(name) => match name.chars().nth(0) {
+                Some('@') => &name[1..],
+                _ => name,
+            },
+            None => {
+                return messaging::reply_to(
+                    client,
+                    msg,
+                    "Format is incorrect! try !gift @<username> <points>",
+                )
+                .await;
+            }
+        };
+        let chatter = match (db::get_chatter_by_username(&chatter_name)) {
+            Some(user) => user,
+            None => {
+                return messaging::reply_to(client, msg, "No chatter with that name!").await;
+            }
+        };
+
+        let points = match cmd_iter.next() {
+            Some(chal) => chal,
+            None => "100",
+        };
+
+        let new_points: i32 = match points.parse() {
+            Result::Ok(p) => match p {
+                p if p < 0 => {
+                    return messaging::reply_to(client, msg, "provide a positive value").await;
+                }
+                _ => p,
+            },
+            Result::Err(_) => {
+                return messaging::reply_to(client, msg, "Provide a valid number").await;
+            }
+        };
+        db::update_points(&chatter.twitch_id, new_points);
+
+        return messaging::reply_to(client, msg, "Points updated!").await;
+    }
+
+    return messaging::reply_to(client, msg, "You aren't allowed to set points").await;
+}
+
+pub async fn handle_gift_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // set a chatters points
+    // format: !setpoints @<chatter_name> <new_point_value>
+
+    let gifter = match db::get_chatter(msg.sender().id()) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::reply_to(client, msg, "Something went wrong! Try Again!").await;
+        }
+    };
+
+    let mut cmd_iter = msg.text().split(' ');
+    cmd_iter.next();
+    let recipient_name = match cmd_iter.next() {
+        Some(name) => match name.chars().nth(0) {
+            Some('@') => &name[1..],
+            _ => name,
+        },
+        None => {
+            return messaging::reply_to(
+                client,
+                msg,
+                "Format is incorrect! try !gift @<username> <points>",
+            )
+            .await;
+        }
+    };
+
+    let recipient = match db::get_chatter_by_username(&recipient_name) {
+        Some(user) => user,
+        None => {
+            return messaging::reply_to(client, msg, "No chatter with that name!").await;
+        }
+    };
+
+    let points = match cmd_iter.next() {
+        Some(pts) => pts,
+        None => "100",
+    };
+
+    let new_points: i32 = match points.parse() {
+        Result::Ok(p) => match p {
+            p if p < 0 => {
+                return messaging::reply_to(client, msg, "provide a positive value").await;
+            }
+            _ => p,
+        },
+        Result::Err(_) => {
+            return messaging::reply_to(client, msg, "Provide a valid number").await;
+        }
+    };
+
+    if gifter.points < new_points {
+        return messaging::reply_to(
+            client,
+            msg,
+            "You don't have enough points to gift that many!",
+        )
+        .await;
+    }
+    chatter::add_points(&recipient.twitch_id, new_points);
+    chatter::subtract_points(&gifter.twitch_id, new_points);
+
+    let reply_msg = format!(
+        "@{} gifted {} points to @{}",
+        gifter.username, new_points, recipient.username
+    );
+
+    return messaging::send_msg(client, msg, &reply_msg).await;
+}
+
+pub async fn handle_pool_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // get current pool return statement with current pool amount and maybe a relative date.
+    let pool = db::get_current_pool();
+
+    match pool {
+        Some(pool) => {
+            // found pool need created_at and amount
+            let amount = pool.amount;
+            let created_at = pool.created_at;
+            let relative_time = helpers::relative_time_string(created_at);
+            let reply_msg = format!(
+                "The Loser Pool is currently {} points! It started {}",
+                amount, relative_time
+            );
+            return messaging::reply_to(client, msg, &reply_msg).await;
+        }
+        None => {
+            let reply_msg = format!("No Pool Found!");
+            return messaging::reply_to(client, msg, &reply_msg).await;
+        }
+    }
+}
+
+pub async fn handle_pool_draw_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    //  select a random chatter
+    //  add the pool amount to the chatters points
+    //  set winner on pool
+    //  create a new pool
+    let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
+
+    if msg.sender().id() != broadcaster_id {
+        return Ok(());
+    }
+    let broadcaster = match db::get_chatter(&broadcaster_id) {
+        Some(chatter) => chatter,
+        None => {
+            return messaging::reply_to(client, msg, "Broadcaster not found!").await;
+        }
+    };
+
+    let pool = match db::get_current_pool() {
+        Some(pool) => pool,
+        None => {
+            return messaging::reply_to(client, msg, "No pool found!").await;
+        }
+    };
+
+    let winner = db::get_random_chatter(&broadcaster);
+    chatter::add_points(&winner.twitch_id, pool.amount);
+    db::update_pool_winner(pool.id, winner.id);
+    db::create_new_pool();
+
+    let reply_msg = format!(
+        "@{} has won the pool of {} points!",
+        winner.username, pool.amount
+    );
+    messaging::reply_to(client, msg, &reply_msg).await
 }
