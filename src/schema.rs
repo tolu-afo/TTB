@@ -62,6 +62,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    losers_pool (id) {
+        id -> Int4,
+        amount -> Int4,
+        winner -> Nullable<Int4>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     lurkers (id) {
         id -> Int4,
         #[max_length = 255]
@@ -70,6 +80,18 @@ diesel::table! {
         twitch_id -> Varchar,
         created_at -> Nullable<Timestamp>,
         updated_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    orders (id) {
+        id -> Int4,
+        stock_id -> Int4,
+        owner_id -> Int4,
+        num_shares -> Int4,
+        strike_price -> Numeric,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -87,6 +109,23 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    stocks (id) {
+        id -> Int4,
+        #[max_length = 255]
+        name -> Varchar,
+        #[max_length = 255]
+        symbol -> Varchar,
+        ticket_price -> Numeric,
+        future_value -> Numeric,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        roi_percentage -> Numeric,
+    }
+}
+
+diesel::joinable!(orders -> chatters (owner_id));
+diesel::joinable!(orders -> stocks (stock_id));
 diesel::joinable!(questions -> categories (category_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -94,6 +133,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     categories,
     chatters,
     duels,
+    losers_pool,
     lurkers,
+    orders,
     questions,
+    stocks,
 );

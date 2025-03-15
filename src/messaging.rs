@@ -36,6 +36,7 @@ pub async fn on_msg(
     match msg.text().split_ascii_whitespace().next() {
         Some("!points") => commands::handle_points_command(client, msg).await,
         Some("!commands") => commands::handle_commands_command(client, msg).await,
+        Some("!help") => commands::handle_commands_command(client, msg).await,
         Some("!gamble") => commands::handle_gamble_command(client, msg).await,
         Some("!github") => commands::handle_github_command(client, msg).await,
         Some("!botrepo") => commands::handle_botrepo_command(client, msg).await,
@@ -56,9 +57,10 @@ pub async fn on_msg(
         Some("!repeat") => commands::handle_repeat_command(client, msg).await,
         Some("!top3") => commands::handle_top_duelists_command(client, msg).await,
         Some("!ranking") => commands::handle_ranking_command(client, msg).await,
-        // Some("!hackathon") => commands::handle_hackathon_command(client, msg).await,
         Some("!setpoints") => commands::handle_setpoints_command(client, msg).await,
         Some("!gift") => commands::handle_gift_command(client, msg).await,
+        Some("!pool") => commands::handle_pool_command(client, msg).await,
+        Some("!selectPoolWinner") => commands::handle_pool_draw_command(client, msg).await,
         _ => Ok(()),
     }
 }

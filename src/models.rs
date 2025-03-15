@@ -1,6 +1,7 @@
 use crate::db;
 use crate::messaging::send_msg;
 use crate::schema::categories;
+use crate::schema::losers_pool;
 use crate::schema::lurkers;
 use crate::schema::questions;
 use crate::state::State;
@@ -268,4 +269,20 @@ impl Question {
     pub fn increment_times_not_answered(&mut self) -> () {
         db::update_times_not_answered(self.id);
     }
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = losers_pool)]
+pub struct NewPool {
+    pub amount: i32,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = losers_pool)]
+pub struct LosersPool {
+    pub id: i32,
+    pub amount: i32,
+    pub winner: Option<i32>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
