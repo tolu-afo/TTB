@@ -725,7 +725,7 @@ pub fn update_pool_winner(id: i32, winner_id: i32) {
         Some(p) => {
             diesel::update(losers_pool)
                 .filter(db_id.eq(id))
-                .set(winner.eq(winner))
+                .set(winner.eq(winner_id))
                 .execute(conn)
                 .expect("error updating pool");
         }
