@@ -1,5 +1,5 @@
-use crate::models::Stock;
-use crate::{db::establish_connection, schema::stocks::symbol};
+use crate::models::{NewOrder, Order, Stock};
+use crate::{db::establish_connection, schema::orders::num_shares, schema::stocks::symbol};
 use bigdecimal::BigDecimal;
 use diesel::{prelude::*, sql_function};
 
@@ -59,4 +59,31 @@ pub fn update_stock_price(sym: &str, price: BigDecimal) {
         .set(ticket_price.eq(dbg!(price)))
         .returning(Stock::as_returning())
         .execute(conn);
+}
+
+pub fn assign_share(stock_id: i32, chatter_id: i32, strike_price: BigDecimal, quantity: i32) {
+    let conn = &mut establish_connection();
+    // use crate::schema::shares::dsl::{stock_id, owner_id, shares, strike_price, quantity};
+
+    let new_order = NewOrder {
+        stock_id: stock_id,
+        owner_id: chatter_id,
+        strike_price: strike_price,
+        num_shares: quantity,
+    };
+
+    let _ = diesel::insert_into(crate::schema::orders::table)
+        .values(&new_order)
+        .execute(conn)
+        .expect("Error Saving Share Order");
+}
+
+pub fn get_shares(chatter_id: i32) -> Vec<Order> {
+    let conn = &mut establish_connection();
+    use crate::schema::orders::dsl::{orders, owner_id};
+
+    orders
+        .filter(owner_id.eq(chatter_id))
+        .load::<Order>(conn)
+        .expect("Some error occured while getting orders from db")
 }

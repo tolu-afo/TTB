@@ -1,2 +1,2 @@
 -- This file should undo anything in `up.sql`
-ALTER TABLE shares DROP CONSTRAINT shares_stock_id_fkey;
+ALTER TABLE orders DROP CONSTRAINT orders_stock_id_fkey;

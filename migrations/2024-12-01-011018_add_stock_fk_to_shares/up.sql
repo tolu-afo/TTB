@@ -1,3 +1,3 @@
 -- Your SQL goes here
-ALTER TABLE shares
-ADD CONSTRAINT fk_stock_chatter_id FOREIGN KEY (stock_id) REFERENCES stocks (id);
+ALTER TABLE orders
+ADD CONSTRAINT orders_stock_id_fkey FOREIGN KEY (stock_id) REFERENCES stocks (id);

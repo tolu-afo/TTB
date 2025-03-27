@@ -9,12 +9,12 @@ CREATE TABLE stocks (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE shares (
+CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     stock_id INT NOT NULL,
     owner_id INT NOT NULL,
-    quantity INT NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
+    num_shares INT NOT NULL,
+    strike_price DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

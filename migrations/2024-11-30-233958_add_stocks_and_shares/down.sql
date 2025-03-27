@@ -1,4 +1,4 @@
 -- This file should undo anything in `up.sql`
 DROP TABLE stocks;
 
-DROP TABLE shares;
+DROP TABLE orders;

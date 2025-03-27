@@ -1,7 +1,8 @@
 use bigdecimal::BigDecimal;
 
-use crate::db::stock;
+use crate::db::{get_chatter_by_username, stock};
 use crate::messaging::{list_with_title, reply_to, ItemSeparator};
+use crate::trade::helpers::calculate_strike_price;
 
 pub async fn handle_liststocks_command(
     client: &mut tmi::Client,
@@ -61,4 +62,53 @@ pub async fn handle_setstockprice_command(
     };
     stock::update_stock_price(&stock.symbol.to_uppercase(), points);
     return reply_to(client, msg, "New price set!").await;
+}
+
+pub async fn handle_setstockowned_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    let mut cmd_iter = msg.text().split(' ');
+    cmd_iter.next(); // skipping command
+
+    let chatter = match cmd_iter.next() {
+        Some(s) => match get_chatter_by_username(s) {
+            Some(chatter) => chatter,
+            None => return reply_to(client, &msg, "That chatter does not exist!").await,
+        },
+        None => return reply_to(client, &msg, "That chatter does not exist!").await,
+    };
+
+    let stock = match cmd_iter.next() {
+        Some(stock) => match stock::get_stock_by_symbol(&stock.to_uppercase()) {
+            Some(stock) => stock,
+            None => return reply_to(client, &msg, "That stock does not exist!").await,
+        },
+        None => return reply_to(client, &msg, "That stock does not exist!").await,
+    };
+
+    let quantity = match cmd_iter.next() {
+        Some(q) => match q.parse() {
+            Ok(quantity) => quantity,
+            Err(e) => return reply_to(client, &msg, "Please enter a valid quantity value.").await,
+        },
+        None => return reply_to(client, &msg, "That stock does not exist!").await,
+    };
+
+    stock::assign_share(
+        stock.id,
+        chatter.twitch_id.parse().unwrap(),
+        calculate_strike_price(&stock),
+        quantity,
+    );
+    return reply_to(client, &msg, "Stock Assigned").await;
+}
+
+pub async fn handle_portfolio_command(
+    client: &mut tmi::Client,
+    msg: &tmi::Privmsg<'_>,
+) -> anyhow::Result<(), anyhow::Error> {
+    // gather portfolio
+    // hashmap to multiple strike_price by num_shares, and add to sum by stock_id
+    Ok(())
 }

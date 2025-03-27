@@ -7,3 +7,4 @@ pub mod models;
 pub mod schema;
 pub mod seed;
 pub mod state;
+pub mod trade;

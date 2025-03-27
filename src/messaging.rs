@@ -65,15 +65,14 @@ pub async fn on_msg(
         Some("!selectPoolWinner") => commands::handle_pool_draw_command(client, msg).await,
         Some("!invest") => Ok(()), // !invest AAPL 1000
         Some("!liststocks") => commands::stock::handle_liststocks_command(client, msg).await,
-        Some("!setstockprice") => commands::stock::handle_setstockprice_command(client, msg).await, // !setstockprice <symbol> <price>
-        Some("!setstockowned") => Ok(()), // !setstockowned <user> <ticket> <points>
-        Some("!portfolio") => Ok(()),
-        Some("!sell") => Ok(()), // !sell <ticket> <points>
-        Some("!stockinfo") => Ok(()),
-        Some("!stockhistory") => Ok(()),
-        // Reach
-        Some("!call") => Ok(()),
-        Some("!put") => Ok(()),
+        Some("!setstockprice") => commands::stock::handle_setstockprice_command(client, msg).await, // !setstockprice <SYM> <price>
+        Some("!setstockowned") => Ok(()), // !setstockowned <user> <SYM> <quantity>
+        Some("!portfolio") => Ok(()),     // !portfolio
+        Some("!trade") => Ok(()),         // !trade buy | sell | call* | put* <SYM> <points
+        Some("!sell") => Ok(()),          // !sell <ticket> <points>
+        Some("!stockinfo") => Ok(()),     // !stockinfo <SYM>
+        Some("!stockhistory") => Ok(()),  // !stockhistory <SYM>
+        Some("!tradehistory") => Ok(()),  // !tradehistory <SYM>
         _ => Ok(()),
     }
 }

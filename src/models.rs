@@ -1,11 +1,12 @@
 use crate::db;
 use crate::messaging::send_msg;
 use crate::schema::losers_pool;
-use crate::schema::{categories, lurkers, questions, shares, stocks};
+use crate::schema::{categories, lurkers, orders, questions, stocks};
 use crate::state::State;
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = crate::schema::chatters)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -309,22 +310,22 @@ pub struct Stock {
 }
 
 #[derive(Insertable)]
-#[diesel(table_name = shares)]
-pub struct NewShare {
+#[diesel(table_name = orders)]
+pub struct NewOrder {
     pub stock_id: i32,
     pub owner_id: i32,
-    pub quantity: i32,
-    pub price: BigDecimal,
+    pub num_shares: i32,
+    pub strike_price: BigDecimal,
 }
 
 #[derive(Debug, Clone, Queryable, Selectable)]
-#[diesel(table_name = shares)]
-pub struct Share {
+#[diesel(table_name = orders)]
+pub struct Order {
     pub id: i32,
     pub stock_id: i32,
     pub owner_id: i32,
-    pub quantity: i32,
-    pub price: BigDecimal,
+    pub num_shares: i32,
+    pub strike_price: BigDecimal,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }

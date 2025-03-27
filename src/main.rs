@@ -17,6 +17,7 @@ mod models;
 mod schema;
 mod seed;
 mod state;
+mod trade;
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
