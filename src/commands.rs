@@ -15,6 +15,8 @@ use std;
 
 // pub mod stock;
 
+pub mod stock;
+
 pub async fn handle_yo_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,

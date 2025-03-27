@@ -1,4 +1,5 @@
-use crate::db::establish_connection;
+use crate::models::Stock;
+use crate::{db::establish_connection, schema::stocks::symbol};
 use bigdecimal::BigDecimal;
 use diesel::{prelude::*, sql_function};
 
@@ -8,7 +9,7 @@ pub fn create_stock(
     future_value: BigDecimal,
     stock_price: BigDecimal,
 ) -> () {
-    let connection = &mut establish_connection();
+    let conn = &mut establish_connection();
     let new_stock = crate::models::NewStock {
         name: stock_name,
         symbol: stock_symbol,
@@ -18,14 +19,44 @@ pub fn create_stock(
 
     diesel::insert_into(crate::schema::stocks::table)
         .values(&new_stock)
-        .execute(connection)
+        .execute(conn)
         .expect("Error saving new stock");
 }
 
-pub fn get_stocks() -> Vec<crate::models::Stock> {
-    let connection = &mut establish_connection();
+pub fn get_stocks() -> Vec<Stock> {
+    let conn = &mut establish_connection();
     use crate::schema::stocks::dsl::stocks;
     stocks
-        .load::<crate::models::Stock>(connection)
+        .order(symbol.asc())
+        .load::<Stock>(conn)
         .expect("Error loading stocks")
+}
+
+pub fn get_stock_by_symbol(sym: &str) -> Option<Stock> {
+    let conn = &mut establish_connection();
+    use crate::schema::stocks::dsl::{stocks, symbol};
+    let stock = stocks
+        .filter(symbol.eq(dbg!(sym)))
+        .select(Stock::as_select())
+        .first(conn)
+        .optional();
+
+    stock.unwrap_or_else(|_| {
+        println!(
+            "Sonmething bad happened when fetching stock with symbol {}",
+            sym
+        );
+        None
+    })
+}
+
+pub fn update_stock_price(sym: &str, price: BigDecimal) {
+    let conn = &mut establish_connection();
+    use crate::schema::stocks::dsl::{stocks, symbol, ticket_price};
+
+    let _ = diesel::update(stocks)
+        .filter(symbol.eq(dbg!(sym)))
+        .set(ticket_price.eq(dbg!(price)))
+        .returning(Stock::as_returning())
+        .execute(conn);
 }
