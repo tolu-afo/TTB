@@ -309,7 +309,7 @@ pub struct Stock {
     pub roi_percentage: BigDecimal,
 }
 
-#[derive(Insertable)]
+#[derive(Debug, Insertable)]
 #[diesel(table_name = orders)]
 pub struct NewOrder {
     pub stock_id: i32,

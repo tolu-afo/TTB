@@ -1,5 +1,7 @@
 use bigdecimal::BigDecimal;
+use tracing_subscriber::fmt::format;
 
+use crate::commands::helpers::parse_username;
 use crate::db::{get_chatter_by_username, stock};
 use crate::messaging::{list_with_title, reply_to, ItemSeparator};
 use crate::trade::helpers::calculate_strike_price;
@@ -68,36 +70,55 @@ pub async fn handle_setstockowned_command(
     client: &mut tmi::Client,
     msg: &tmi::Privmsg<'_>,
 ) -> anyhow::Result<(), anyhow::Error> {
+    let usage = "!setstockowned [user] [stock] [quantity]";
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next(); // skipping command
 
-    let chatter = match cmd_iter.next() {
+    let chatter = match parse_username(cmd_iter.next()) {
         Some(s) => match get_chatter_by_username(s) {
             Some(chatter) => chatter,
-            None => return reply_to(client, &msg, "That chatter does not exist!").await,
+            None => {
+                let err_msg = format!("{}: chatter with name: {} does not exist!", usage, s);
+                return reply_to(client, &msg, &err_msg).await;
+            }
         },
-        None => return reply_to(client, &msg, "That chatter does not exist!").await,
+        None => {
+            let err_msg = format!("{}: Please provide a chat username", usage);
+            return reply_to(client, &msg, &err_msg).await;
+        }
     };
 
     let stock = match cmd_iter.next() {
         Some(stock) => match stock::get_stock_by_symbol(&stock.to_uppercase()) {
             Some(stock) => stock,
-            None => return reply_to(client, &msg, "That stock does not exist!").await,
+            None => {
+                let err_msg = format!("{}: The stock: {} does not exist!", usage, stock);
+                return reply_to(client, &msg, &err_msg).await;
+            }
         },
-        None => return reply_to(client, &msg, "That stock does not exist!").await,
+        None => {
+            let err_msg = format!("{}: No stock provided", usage);
+            return reply_to(client, &msg, &err_msg).await;
+        }
     };
 
     let quantity = match cmd_iter.next() {
         Some(q) => match q.parse() {
-            Ok(quantity) => quantity,
-            Err(e) => return reply_to(client, &msg, "Please enter a valid quantity value.").await,
+            Ok(quantity) => dbg!(quantity),
+            Err(e) => {
+                let err_msg = format!("{}: The quantity: {} is not a valid value.", usage, q);
+                return reply_to(client, &msg, &err_msg).await;
+            }
         },
-        None => return reply_to(client, &msg, "That stock does not exist!").await,
+        None => {
+            let err_msg = format!("{}: No quantity was provided!", usage);
+            return reply_to(client, &msg, &err_msg).await;
+        }
     };
 
     stock::assign_share(
         stock.id,
-        chatter.twitch_id.parse().unwrap(),
+        dbg!(chatter.id),
         calculate_strike_price(&stock),
         quantity,
     );

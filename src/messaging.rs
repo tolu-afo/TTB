@@ -66,13 +66,13 @@ pub async fn on_msg(
         Some("!invest") => Ok(()), // !invest AAPL 1000
         Some("!liststocks") => commands::stock::handle_liststocks_command(client, msg).await,
         Some("!setstockprice") => commands::stock::handle_setstockprice_command(client, msg).await, // !setstockprice <SYM> <price>
-        Some("!setstockowned") => Ok(()), // !setstockowned <user> <SYM> <quantity>
-        Some("!portfolio") => Ok(()),     // !portfolio
-        Some("!trade") => Ok(()),         // !trade buy | sell | call* | put* <SYM> <points
-        Some("!sell") => Ok(()),          // !sell <ticket> <points>
-        Some("!stockinfo") => Ok(()),     // !stockinfo <SYM>
-        Some("!stockhistory") => Ok(()),  // !stockhistory <SYM>
-        Some("!tradehistory") => Ok(()),  // !tradehistory <SYM>
+        Some("!setstockowned") => commands::stock::handle_setstockowned_command(client, msg).await, // !setstockowned <user> <SYM> <quantity>
+        Some("!portfolio") => commands::stock::handle_portfolio_command(client, msg).await, // !portfolio
+        Some("!trade") => Ok(()), // !trade buy | sell | call* | put* <SYM> <points
+        Some("!sell") => Ok(()),  // !sell <ticket> <points>
+        Some("!stockinfo") => Ok(()), // !stockinfo <SYM>
+        Some("!stockhistory") => Ok(()), // !stockhistory <SYM>
+        Some("!tradehistory") => Ok(()), // !tradehistory <SYM>
         _ => Ok(()),
     }
 }

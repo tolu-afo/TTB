@@ -72,6 +72,8 @@ pub fn assign_share(stock_id: i32, chatter_id: i32, strike_price: BigDecimal, qu
         num_shares: quantity,
     };
 
+    dbg!(&new_order);
+
     let _ = diesel::insert_into(crate::schema::orders::table)
         .values(&new_order)
         .execute(conn)

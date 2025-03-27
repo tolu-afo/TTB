@@ -72,6 +72,7 @@ fn db_get_chatter_by_username(conn: &mut PgConnection, username: &str) -> Option
 }
 
 pub fn get_chatter_by_username(username: &str) -> Option<Chatter> {
+    dbg!(username);
     db_get_chatter_by_username(&mut establish_connection(), username)
 }
 

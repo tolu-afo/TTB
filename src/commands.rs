@@ -15,6 +15,7 @@ use std;
 
 // pub mod stock;
 
+pub mod helpers;
 pub mod stock;
 
 pub async fn handle_yo_command(
