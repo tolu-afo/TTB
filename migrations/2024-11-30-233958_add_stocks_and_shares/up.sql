@@ -1,0 +1,20 @@
+-- Your SQL goes here
+CREATE TABLE stocks (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    symbol VARCHAR(255) NOT NULL,
+    ticket_price DECIMAL(10, 2) NOT NULL,
+    future_value DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE shares (
+    id SERIAL PRIMARY KEY,
+    stock_id INT NOT NULL,
+    owner_id INT NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

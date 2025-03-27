@@ -3,8 +3,10 @@ use crate::{
     db::{self, create_category, create_question, get_categories, get_questions},
     schema::categories,
 };
+use db::stock::create_stock;
 use dotenv::dotenv;
 use std::env;
+use std::str::FromStr;
 
 #[derive(Copy, Clone)]
 pub enum QuestionKind {
@@ -140,6 +142,29 @@ fn seed_loser_pool() -> () {
         }
     }
 }
+fn seed_stocks() -> () {
+    let stocks = vec![
+        ("Apple", "AAPL", "150.0", "150.0"),
+        ("Microsoft", "MSFT", "300.0", "300.0"),
+        ("Google", "GOOGL", "2000.0", "2000.0"),
+        ("Amazon", "AMZN", "3000.0", "3000.0"),
+        ("Facebook", "FB", "300.0", "300.0"),
+        ("Tesla", "TSLA", "700.0", "700.0"),
+        ("Netflix", "NFLX", "500.0", "500.0"),
+        ("Nvidia", "NVDA", "200.0", "200.0"),
+        ("AMD", "AMD", "100.0", "100.0"),
+        ("Intel", "INTC", "50.0", "50.0"),
+    ];
+
+    for stock in stocks {
+        // BigDecimal::from_str(&input).unwrap();
+        let ticket_price = bigdecimal::BigDecimal::from_str(stock.2).unwrap();
+        let future_value = bigdecimal::BigDecimal::from_str(stock.3).unwrap();
+
+        dbg!(&ticket_price * &future_value);
+        db::stock::create_stock(stock.0, stock.1, ticket_price, future_value);
+    }
+}
 
 pub fn seed_initial_data() -> () {
     // check if questions and categories already exist
@@ -163,4 +188,11 @@ pub fn seed_initial_data() -> () {
     }
 
     seed_loser_pool();
+    let stocks = db::stock::get_stocks();
+    if stocks.len() == 0 {
+        println!("Seeding stocks");
+        seed_stocks();
+    } else {
+        println!("Stocks already seeded!");
+    }
 }
