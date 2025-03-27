@@ -2,7 +2,7 @@ use crate::chatter;
 use crate::chatter::get_challenge_to_accept;
 use crate::db;
 use crate::db::get_category_by_name;
-use crate::helpers;
+use crate::helpers::relative_time_string;
 use crate::messaging;
 use crate::messaging::{list_with_title, ItemSeparator};
 use crate::models;
@@ -1022,7 +1022,7 @@ pub async fn handle_pool_command(
             // found pool need created_at and amount
             let amount = pool.amount;
             let created_at = pool.created_at;
-            let relative_time = helpers::relative_time_string(created_at);
+            let relative_time = relative_time_string(created_at);
             let reply_msg = format!(
                 "The Loser Pool is currently {} points! It started {}",
                 amount, relative_time
