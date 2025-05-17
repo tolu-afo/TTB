@@ -2,6 +2,7 @@ use crate::chatter;
 use crate::chatter::get_challenge_to_accept;
 use crate::db;
 use crate::db::get_category_by_name;
+use crate::db::get_general_category;
 use crate::helpers;
 use crate::messaging;
 use crate::messaging::{list_with_title, ItemSeparator};
@@ -592,15 +593,38 @@ pub async fn handle_addquestion_command(
         )
         .await;
     }
-    let question_answer: Vec<&str> = response.split('|').collect();
+    let mut question_answer = response.split('|');
 
     // strip leading and trailing whitespaces
-    let question = question_answer[0].trim();
-    let answer = question_answer[1].trim();
-    let category_id = question_answer[2].trim();
+    let question = match question_answer.next() {
+        Some(question) => question.trim(),
+        None => {
+            return messaging::reply_to(
+                client,
+                &msg,
+                "Invalid format! Use !addquestion <question> | <answer> | <category_id>",
+            )
+            .await;
+        }
+    };
+    let answer = match question_answer.next() {
+        Some(answer) => answer.trim(),
+        None => {
+            return messaging::reply_to(
+                client,
+                &msg,
+                "Invalid format! Use !addquestion <question> | <answer> | <category_id>",
+            )
+            .await;
+        }
+    };
+    let cat_id = match question_answer.next() {
+        Some(cat_id) => cat_id.trim(),
+        None => &db::get_general_category().id.to_string(),
+    };
 
     // if question or answer is an empty string or special characters only send error
-    if question.is_empty() || answer.is_empty() || category_id.is_empty() {
+    if question.is_empty() || answer.is_empty() || cat_id.is_empty() {
         return messaging::reply_to(
             client,
             &msg,
@@ -609,7 +633,7 @@ pub async fn handle_addquestion_command(
         .await;
     };
 
-    let category = match category_id.parse() {
+    let category = match cat_id.parse() {
         Ok(id) => match db::get_category(id) {
             Some(category) => category,
             None => {
