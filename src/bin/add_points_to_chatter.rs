@@ -19,7 +19,7 @@ fn main() {
     let point_value = args()
         .nth(2)
         .expect("add_points_to_chatter requires points")
-        .parse::<i32>()
+        .parse::<i64>()
         .expect("Invalid Point Value");
 
     let connection = &mut establish_connection();

@@ -30,18 +30,6 @@ impl std::fmt::Display for TwitchUserId {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-pub struct Chatter {
-    id: u32,
-    username: TwitchUserId,
-    points: u32,
-    wins: u32,
-    losses: u32,
-    last_seen: String,
-    lurk_time: u32,
-}
-
 pub fn unlurk(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) -> () {
     let twitch_id = msg.sender().id();
     let lurker = match get_lurker(twitch_id.to_string()) {
@@ -98,7 +86,8 @@ pub async fn on_new_chatter(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) ->
     ).await;
 }
 // TODO: Add a saturaton operation for negative overflows crates: ranged_integers, constrained_int, deranged (deranged might be the best one?)
-pub fn add_points(twitch_id: &str, points: i32) -> () {
+// TODO: check out: checked_add ie. 5.checked_add(6)
+pub fn add_points(twitch_id: &str, points: i64) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_points = if (chatter.points + points) < -1000 {
@@ -112,7 +101,7 @@ pub fn add_points(twitch_id: &str, points: i32) -> () {
     }
 }
 
-pub fn subtract_points(twitch_id: &str, points: i32) -> () {
+pub fn subtract_points(twitch_id: &str, points: i64) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
             let new_points = if (chatter.points - points) < -1000 {
@@ -126,7 +115,7 @@ pub fn subtract_points(twitch_id: &str, points: i32) -> () {
     }
 }
 
-pub fn get_points(twitch_id: &str) -> i32 {
+pub fn get_points(twitch_id: &str) -> i64 {
     match get_chatter(twitch_id) {
         Some(chatter) => chatter.points,
         None => {
