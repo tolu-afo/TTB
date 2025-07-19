@@ -18,3 +18,19 @@ pub fn relative_time_string(datetime: NaiveDateTime) -> String {
         format!("{} year(s) ago", duration.num_days() / 365)
     }
 }
+
+pub fn overflow_add(a: i64, b: i64) -> i64 {
+    // calls built-in function checked_add, if returns none, function returns a
+    match a.checked_add(b) {
+        Some(x) => x,
+        None => a,
+    }
+}
+
+pub fn _overflow_sub(a: i64, b: i64) -> i64 {
+    // calls built-in function checked_add, if returns none, function returns a
+    match a.checked_sub(b) {
+        Some(x) => x,
+        None => a,
+    }
+}

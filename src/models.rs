@@ -15,7 +15,7 @@ pub struct Chatter {
     pub id: i32,
     pub twitch_id: String,
     pub username: String,
-    pub points: i32,
+    pub points: i64,
     pub wins: i32,
     pub losses: i32,
     pub last_seen: NaiveDateTime,
@@ -29,7 +29,7 @@ pub struct Chatter {
 pub struct Duel {
     pub id: i32,
     pub accepted: bool, // TODO: depecrated field slated for removal
-    pub points: i32,
+    pub points: i64,
     pub challenger: String,
     pub challenged: String,
     pub winner: Option<String>,
@@ -58,7 +58,7 @@ impl Duel {
         challenged: &str,
         challenger_id: &str,
         challenged_id: &str,
-        points: i32,
+        points: i64,
     ) -> Duel {
         db::create_duel(challenger, challenged, challenger_id, challenged_id, points)
     }
@@ -166,7 +166,7 @@ pub struct NewDuel<'a> {
     pub challenged: &'a str,
     pub challenger_id: &'a str,
     pub challenged_id: &'a str,
-    pub points: i32,
+    pub points: i64,
 }
 
 use crate::schema::accepted_duels;
@@ -274,14 +274,14 @@ impl Question {
 #[derive(Insertable)]
 #[diesel(table_name = losers_pool)]
 pub struct NewPool {
-    pub amount: i32,
+    pub amount: i64,
 }
 
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = losers_pool)]
 pub struct LosersPool {
     pub id: i32,
-    pub amount: i32,
+    pub amount: i64,
     pub winner: Option<i32>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,

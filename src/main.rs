@@ -22,7 +22,7 @@ mod state;
 async fn main() -> Result<()> {
     dotenv().ok();
     let broadcaster_id = std::env::var("BROADCASTER_ID").expect("BROADCASTER_ID must be set");
-    let bot_id: String = std::env::var("BOT_TWITCH_ID").expect("BOT_TWITCH_ID must be set.");
+    let _bot_id: String = std::env::var("BOT_TWITCH_ID").expect("BOT_TWITCH_ID must be set.");
     let client_secret = std::env::var("TWITCH_CLIENT_SECRET")
         .expect("TWITCH_CLIENT_SECRET must be set.")
         .into();

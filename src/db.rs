@@ -125,16 +125,16 @@ pub async fn record_user_presence(client: &mut tmi::Client, msg: &tmi::Privmsg<'
     };
 }
 
-fn db_update_points(conn: &mut PgConnection, id: &str, new_points: i32) {
+fn db_update_points(conn: &mut PgConnection, id: &str, new_points: i64) {
     use crate::schema::chatters::dsl::{chatters, points, twitch_id};
 
     diesel::update(chatters.filter(twitch_id.eq(id)))
         .set(points.eq(new_points))
         .execute(conn)
-        .expect("Points value should be i32");
+        .expect("Points value should be i64");
 }
 
-pub fn update_points(id: &str, new_points: i32) {
+pub fn update_points(id: &str, new_points: i64) {
     db_update_points(&mut establish_connection(), id, new_points)
 }
 
@@ -180,7 +180,7 @@ fn db_create_duel(
     challenged: &str,
     challenger_id: &str,
     challenged_id: &str,
-    points: i32,
+    points: i64,
 ) -> Duel {
     use crate::schema::duels;
     let new_duel = NewDuel {
@@ -203,7 +203,7 @@ pub fn create_duel(
     challenged: &str,
     challenger_id: &str,
     challenged_id: &str,
-    points: i32,
+    points: i64,
 ) -> Duel {
     db_create_duel(
         &mut establish_connection(),
@@ -675,7 +675,7 @@ pub fn create_new_pool() -> i32 {
     new_pool.id
 }
 
-pub fn add_pool_points(points: i32) {
+pub fn add_pool_points(points: i64) {
     let conn = &mut establish_connection();
     use crate::schema::losers_pool::dsl::{amount, id as db_id, losers_pool};
 
@@ -696,7 +696,7 @@ pub fn add_pool_points(points: i32) {
     }
 }
 
-pub fn get_pool(id: i32) -> Option<LosersPool> {
+pub fn _get_pool(id: i32) -> Option<LosersPool> {
     let conn = &mut establish_connection();
     use crate::schema::losers_pool::dsl::{id as db_id, losers_pool};
 
@@ -705,7 +705,7 @@ pub fn get_pool(id: i32) -> Option<LosersPool> {
         .select(LosersPool::as_select())
         .first::<LosersPool>(conn)
         .optional();
-    pool.unwrap_or_else(|e| {
+    pool.unwrap_or_else(|_e| {
         println!("didn't get pool back");
         None
     })
@@ -722,7 +722,7 @@ pub fn update_pool_winner(id: i32, winner_id: i32) {
         .optional();
 
     match pool.unwrap() {
-        Some(p) => {
+        Some(_p) => {
             diesel::update(losers_pool)
                 .filter(db_id.eq(id))
                 .set(winner.eq(winner_id))
@@ -745,7 +745,7 @@ pub fn get_current_pool() -> Option<LosersPool> {
         .first::<LosersPool>(conn)
         .optional();
 
-    pool.unwrap_or_else(|p| {
+    pool.unwrap_or_else(|_e| {
         println!("failed to find pool");
         None
     })

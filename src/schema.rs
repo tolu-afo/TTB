@@ -28,7 +28,7 @@ diesel::table! {
         id -> Int4,
         twitch_id -> Varchar,
         username -> Varchar,
-        points -> Int4,
+        points -> Int8,
         wins -> Int4,
         losses -> Int4,
         last_seen -> Timestamp,
@@ -40,7 +40,7 @@ diesel::table! {
     duels (id) {
         id -> Int4,
         accepted -> Bool,
-        points -> Int4,
+        points -> Int8,
         challenger -> Varchar,
         challenged -> Varchar,
         winner -> Nullable<Varchar>,
@@ -64,7 +64,7 @@ diesel::table! {
 diesel::table! {
     losers_pool (id) {
         id -> Int4,
-        amount -> Int4,
+        amount -> Int8,
         winner -> Nullable<Int4>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,

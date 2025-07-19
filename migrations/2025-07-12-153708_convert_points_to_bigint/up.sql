@@ -1,0 +1,6 @@
+-- Your SQL goes here
+ALTER TABLE chatters ALTER COLUMN points TYPE BIGINT;
+
+ALTER TABLE duels ALTER COLUMN points TYPE BIGINT;
+
+ALTER TABLE losers_pool ALTER COLUMN amount TYPE BIGINT;

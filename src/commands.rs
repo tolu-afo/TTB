@@ -2,7 +2,6 @@ use crate::chatter;
 use crate::chatter::get_challenge_to_accept;
 use crate::db;
 use crate::db::get_category_by_name;
-use crate::db::get_general_category;
 use crate::helpers;
 use crate::messaging;
 use crate::messaging::{list_with_title, ItemSeparator};
@@ -302,7 +301,7 @@ pub async fn handle_duel_command(
         None => "100",
     };
 
-    let points: i32 = match points.parse() {
+    let points: i64 = match points.parse() {
         Result::Ok(p) => match p {
             p if p < 0 => {
                 return messaging::send_duel_err(
@@ -695,7 +694,7 @@ pub async fn handle_gamble_command(
     let mut cmd_iter = msg.text().split(' ');
     cmd_iter.next();
     let wager = match cmd_iter.next() {
-        Some(w) => match w.parse::<i32>() {
+        Some(w) => match w.parse::<i64>() {
             Ok(w) => w,
             Err(_) => {
                 return messaging::reply_to(
@@ -912,7 +911,7 @@ pub async fn handle_setpoints_command(
 
         let mut cmd_iter = msg.text().split(' ');
         cmd_iter.next();
-        let chatter_name = match (cmd_iter.next()) {
+        let chatter_name = match cmd_iter.next() {
             Some(name) => match name.chars().nth(0) {
                 Some('@') => &name[1..],
                 _ => name,
@@ -926,7 +925,7 @@ pub async fn handle_setpoints_command(
                 .await;
             }
         };
-        let chatter = match (db::get_chatter_by_username(&chatter_name)) {
+        let chatter = match db::get_chatter_by_username(&chatter_name) {
             Some(user) => user,
             None => {
                 return messaging::reply_to(client, msg, "No chatter with that name!").await;
@@ -938,7 +937,7 @@ pub async fn handle_setpoints_command(
             None => "100",
         };
 
-        let new_points: i32 = match points.parse() {
+        let new_points: i64 = match points.parse() {
             Result::Ok(p) => match p {
                 p if p < 0 => {
                     return messaging::reply_to(client, msg, "provide a positive value").await;
@@ -1000,7 +999,7 @@ pub async fn handle_gift_command(
         None => "100",
     };
 
-    let new_points: i32 = match points.parse() {
+    let new_points: i64 = match points.parse() {
         Result::Ok(p) => match p {
             p if p < 0 => {
                 return messaging::reply_to(client, msg, "provide a positive value").await;
