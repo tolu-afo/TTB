@@ -24,7 +24,6 @@ twitch_api2 = { version = "0.6.1", features = [
 ] }
 twitch_oauth2 = { version = "0.12.9", features = ["client"] }
 log = "0.4.21"
-malachite = { version = "0.6.1", features = ["serde"] }
 
 
 [[bin]]
