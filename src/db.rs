@@ -696,7 +696,7 @@ pub fn add_pool_points(points: i64) {
     }
 }
 
-pub fn get_pool(id: i32) -> Option<LosersPool> {
+pub fn _get_pool(id: i32) -> Option<LosersPool> {
     let conn = &mut establish_connection();
     use crate::schema::losers_pool::dsl::{id as db_id, losers_pool};
 
@@ -705,7 +705,7 @@ pub fn get_pool(id: i32) -> Option<LosersPool> {
         .select(LosersPool::as_select())
         .first::<LosersPool>(conn)
         .optional();
-    pool.unwrap_or_else(|e| {
+    pool.unwrap_or_else(|_e| {
         println!("didn't get pool back");
         None
     })
@@ -722,7 +722,7 @@ pub fn update_pool_winner(id: i32, winner_id: i32) {
         .optional();
 
     match pool.unwrap() {
-        Some(p) => {
+        Some(_p) => {
             diesel::update(losers_pool)
                 .filter(db_id.eq(id))
                 .set(winner.eq(winner_id))
@@ -745,7 +745,7 @@ pub fn get_current_pool() -> Option<LosersPool> {
         .first::<LosersPool>(conn)
         .optional();
 
-    pool.unwrap_or_else(|p| {
+    pool.unwrap_or_else(|_e| {
         println!("failed to find pool");
         None
     })

@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use crate::helpers::overflow_add;
 use anyhow::{anyhow, Result};
 use chrono::TimeZone;
 use log::info;
@@ -90,10 +91,10 @@ pub async fn on_new_chatter(client: &mut tmi::Client, msg: &tmi::Privmsg<'_>) ->
 pub fn add_points(twitch_id: &str, points: i64) -> () {
     match get_chatter(twitch_id) {
         Some(chatter) => {
-            let new_points = if (chatter.points + points) < -1000 {
+            let new_points = if (overflow_add(chatter.points, points)) < -1000 {
                 -1000
             } else {
-                chatter.points + points
+                overflow_add(chatter.points, points)
             };
             update_points(twitch_id, new_points)
         }

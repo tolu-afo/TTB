@@ -2,7 +2,6 @@ use crate::chatter;
 use crate::chatter::get_challenge_to_accept;
 use crate::db;
 use crate::db::get_category_by_name;
-use crate::db::get_general_category;
 use crate::helpers;
 use crate::messaging;
 use crate::messaging::{list_with_title, ItemSeparator};
@@ -912,7 +911,7 @@ pub async fn handle_setpoints_command(
 
         let mut cmd_iter = msg.text().split(' ');
         cmd_iter.next();
-        let chatter_name = match (cmd_iter.next()) {
+        let chatter_name = match cmd_iter.next() {
             Some(name) => match name.chars().nth(0) {
                 Some('@') => &name[1..],
                 _ => name,
@@ -926,7 +925,7 @@ pub async fn handle_setpoints_command(
                 .await;
             }
         };
-        let chatter = match (db::get_chatter_by_username(&chatter_name)) {
+        let chatter = match db::get_chatter_by_username(&chatter_name) {
             Some(user) => user,
             None => {
                 return messaging::reply_to(client, msg, "No chatter with that name!").await;

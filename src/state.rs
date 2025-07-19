@@ -57,7 +57,7 @@ impl State {
         );
         match self.duel_cache.get_mut(&k) {
             Some(q) => match q.pop_front() {
-                Some(duel) => return true,
+                Some(_duel) => return true,
                 None => return false,
             },
             None => return false,

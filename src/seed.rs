@@ -1,8 +1,5 @@
 // seed category and question data into database if not exists already
-use crate::{
-    db::{self, create_category, create_question, get_categories, get_questions},
-    schema::categories,
-};
+use crate::db::{self, create_category, create_question, get_categories, get_questions};
 use dotenv::dotenv;
 use std::env;
 
@@ -87,6 +84,8 @@ const QUESTIONS: &[Question] = &[
     Question::new(QuestionKind::Scramble, "chooectal", "chocolate"),
     Question::new(QuestionKind::Scramble, "ubritro", "burrito"),
     Question::new(QuestionKind::Scramble, "algansa", "lasagna"),
+
+    Question::new(QuestionKind::General, "What was the first project Tolu ever made on stream?", "Italian Restaurant Website")
 ];
 
 fn seed_categories() -> () {
@@ -127,7 +126,7 @@ fn seed_loser_pool() -> () {
     // Seed initial loser pool if no pool without a winner exists.
 
     match db::get_current_pool() {
-        Some(pool) => {
+        Some(_pool) => {
             // return we found a pool we don't need to create a new one.
             println!("Yes pool!");
             return;
